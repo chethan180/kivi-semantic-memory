@@ -1,0 +1,130 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Kivi</title>
+<link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+
+<div class="shell">
+
+  <nav class="rail">
+    <div class="brand">
+      <span class="mark" aria-hidden="true"></span>
+      <span class="wordmark">Kivi</span>
+    </div>
+
+    <button class="nav" data-view="ask" aria-current="true">
+      <span class="nav-label">Hey Kivi</span>
+      <span class="nav-hint">Ask about your work</span>
+    </button>
+    <button class="nav" data-view="dictation">
+      <span class="nav-label">Dictation</span>
+      <span class="nav-hint">Everything you said</span>
+    </button>
+    <button class="nav" data-view="knows">
+      <span class="nav-label">What Kivi knows</span>
+      <span class="nav-hint">Review and correct</span>
+      <span class="badge" id="decision-badge" hidden></span>
+    </button>
+    <button class="nav" data-view="inspect">
+      <span class="nav-label">Inspector</span>
+      <span class="nav-hint">How it decided</span>
+    </button>
+
+    <div class="rail-foot" id="rail-status">
+      <span class="dot"></span><span id="status-text">connecting…</span>
+    </div>
+  </nav>
+
+  <main class="stage">
+
+    <!-- ============================ HEY KIVI ============================ -->
+    <section class="view" id="view-ask">
+      <header class="view-head">
+        <h1>Hey Kivi</h1>
+        <p class="lede">
+          Ask anything your dictations can answer. Every answer shows what it came
+          from — and Kivi says so when the answer isn't there.
+        </p>
+      </header>
+
+      <form class="asker" id="ask-form" autocomplete="off">
+        <input id="ask-input" type="text" placeholder="Who's running the pricing redesign now?"
+               aria-label="Ask Kivi a question">
+        <button type="submit" id="ask-button">Ask</button>
+      </form>
+
+      <div class="suggestions" id="suggestions"></div>
+
+      <button class="more" id="new-chat" hidden>Start a new conversation</button>
+
+      <div id="conversation" class="conversation"></div>
+    </section>
+
+    <!-- =========================== DICTATION ============================ -->
+    <section class="view" id="view-dictation" hidden>
+      <header class="view-head">
+        <h1>Dictation</h1>
+        <p class="lede">
+          What you said, as you said it. Kivi doesn't rewrite this, and memory
+          never changes what appears here.
+        </p>
+      </header>
+
+      <div class="toolbar">
+        <input id="rec-search" type="search" placeholder="Search your dictations" aria-label="Search dictations">
+        <div class="chips" id="app-filters"></div>
+        <label class="toggle">
+          <input type="checkbox" id="show-raw">
+          <span>Show raw speech</span>
+        </label>
+      </div>
+
+      <div id="record-list" class="records"></div>
+      <button class="more" id="load-more" hidden>Load more</button>
+    </section>
+
+    <!-- ============================= KNOWS ============================== -->
+    <section class="view" id="view-knows" hidden>
+      <header class="view-head">
+        <h1>What Kivi knows</h1>
+        <p class="lede">
+          Everything Kivi has learned, in plain language, with what it learned it
+          from. Correct anything that's wrong — you shouldn't have to manage this.
+        </p>
+      </header>
+      <div id="knows-body"></div>
+    </section>
+
+    <!-- ============================ INSPECT ============================= -->
+    <section class="view" id="view-inspect" hidden>
+      <header class="view-head">
+        <h1>Inspector</h1>
+        <p class="lede">
+          The engineering view: why each candidate was kept or refused, how each
+          answer was retrieved, and what it cost.
+        </p>
+      </header>
+      <div id="inspect-body"></div>
+    </section>
+
+  </main>
+</div>
+
+<div class="drawer" id="drawer" hidden>
+  <div class="drawer-scrim" data-close></div>
+  <aside class="drawer-panel" role="dialog" aria-modal="true" aria-labelledby="drawer-title">
+    <header class="drawer-head">
+      <h2 id="drawer-title">Source</h2>
+      <button class="icon" data-close aria-label="Close">✕</button>
+    </header>
+    <div class="drawer-body" id="drawer-body"></div>
+  </aside>
+</div>
+
+<script src="/static/app.js"></script>
+</body>
+</html>

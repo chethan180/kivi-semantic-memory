@@ -1,0 +1,38 @@
+# Environment / secrets
+.env
+.env.bak
+*.key
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+.pytest_cache/
+.ruff_cache/
+
+# Local state. The database is rebuilt from the committed corpus by following
+# RUN.md; it is 34 MB and would otherwise dominate the repository.
+data/*.db
+data/*.db-wal
+data/*.db-shm
+data/*.db.backup-*
+data/models/
+
+# Scratch dumps, regenerable from the database.
+data/review/
+test.txt
+
+# Working notes, not part of the submission.
+.claude/
+docs/submission-drafts/
+
+# Sarvam's assignment brief - their document, not ours to republish.
+assignment.txt
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/

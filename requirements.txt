@@ -1,0 +1,21 @@
+# Runtime dependencies. Exact pinned versions are in requirements.lock.txt,
+# which is what RUN.md installs. These ranges are what the project is
+# developed against.
+
+httpx>=0.28
+pydantic>=2.9
+pydantic-settings>=2.6
+typer>=0.15
+rich>=13.9
+numpy>=2.0
+sqlite-vec>=0.1.6
+
+# HTTP backend (kivi/api.py) and the frontend it serves.
+fastapi>=0.115
+uvicorn>=0.32
+python-multipart>=0.0.20
+
+# Inspection UI (ui/app.py). A test harness, not the product surface.
+streamlit>=1.40
+
+# Tests: see requirements-dev.txt

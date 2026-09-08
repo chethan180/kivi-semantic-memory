@@ -1,0 +1,1153 @@
+[
+  {
+    "person": "Amma",
+    "kind": "lexical",
+    "planted": "\"Mama\" when affectionate, \"Amma\" when routine",
+    "stages": [
+      {
+        "stage": 1,
+        "seen": 15,
+        "seen_score": 1.0,
+        "unseen_score": 1.0,
+        "profile": {
+          "address_forms": [
+            {
+              "form": "Amma",
+              "when": "the message is practical, logistical, or a reminder/instruction",
+              "examples": [
+                "Hey Amma, just wanted to let you know the electrician is coming over around four o'clock today, so someone will be there.",
+                "Amma, could you please go turn off the water motor now? It's been running for like twenty minutes.",
+                "Amma, I checked the schedule and yeah, my train is definitely arriving at 4 PM, so see you then."
+              ]
+            },
+            {
+              "form": "Mama",
+              "when": "the message is emotional, affectionate, reassuring, apologetic, or expressing gratitude",
+              "examples": [
+                "Sorry, Mama, I completely forgot to call you last night. Things got so crazy at work.",
+                "Just really missing you today, Mama. Wish I could just drop by for a quick cup of chai.",
+                "Mama, heading to the airport now. Just wanted to say I love you so much and I will call you when I land."
+              ]
+            }
+          ],
+          "conditional_rules": [
+            {
+              "when": "the message is practical or logistical (such as asking to turn off the water pump, checking train times, or coordinating visits)",
+              "then": "use the address form 'Amma' and keep the tone direct and functional",
+              "evidence": [
+                "Amma, could you please go turn off the water motor now? It's been running for like twenty minutes.",
+                "Hey Amma, the overhead tank must be full by now. Please switch off the pump.",
+                "Amma, I checked the schedule and yeah, my train is definitely arriving at 4 PM, so see you then."
+              ]
+            },
+            {
+              "when": "the message is emotional, reassuring, or affectionate (such as expressing love, missing her, apologizing, or offering comfort)",
+              "then": "use the address form 'Mama' and write with a warmer, more expressive tone",
+              "evidence": [
+                "Just really missing you today, Mama. Wish I could just drop by for a quick cup of chai.",
+                "Hey Mama, don't stress so much over that phone call earlier. Everything is going to be completely fine, I promise.",
+                "Mama, heading to the airport now. Just wanted to say I love you so much and I will call you when I land."
+              ]
+            }
+          ],
+          "constants": [
+            "No formal sign-offs are used at the end of messages.",
+            "Messages are written in complete, well-punctuated sentences with natural contractions.",
+            "The address form is almost always placed at the very beginning of the message, or immediately after a brief greeting like 'Hey' or 'Hi'."
+          ],
+          "summary": "The writer addresses their mother as 'Amma' for practical, logistical, and everyday tasks, but switches to 'Mama' for warm, emotional, reassuring, or affectionate messages.",
+          "exceptions": [
+            {
+              "observed": "Placing the address form at the end of the sentence ('So, what did you cook for lunch today, Amma?')",
+              "times_seen": 1,
+              "note": "In all other 14 messages, the address form is placed at the very beginning of the message (either first or immediately after a short greeting like 'Hey' or 'Hi')."
+            }
+          ],
+          "uncertain": [
+            "Whether they ever use 'Amma' in an affectionate context or 'Mama' in a purely logistical context.",
+            "Whether they use other greetings like 'Hello' or 'Dear'."
+          ]
+        },
+        "drafts": [
+          {
+            "instruction": "write I love you",
+            "expected": "Mama",
+            "got": "Mama",
+            "ok": true,
+            "unseen": false,
+            "text": "Mama, I love you so much."
+          },
+          {
+            "instruction": "tell her I will be home by 8",
+            "expected": "Amma",
+            "got": "Amma",
+            "ok": true,
+            "unseen": false,
+            "text": "Amma, just wanted to let you know I will be home by 8."
+          },
+          {
+            "instruction": "tell her I dreamt about her last night",
+            "expected": "Mama",
+            "got": "Mama",
+            "ok": true,
+            "unseen": true,
+            "text": "Just woke up and wanted to tell you that I dreamt about you last night, Mama."
+          },
+          {
+            "instruction": "tell her the flight on Tuesday got cancelled",
+            "expected": "Amma",
+            "got": "Amma",
+            "ok": true,
+            "unseen": true,
+            "text": "Hey Amma, just wanted to let you know that my flight on Tuesday got cancelled, so I'll need to reschedule it."
+          },
+          {
+            "instruction": "tell her I am proud of how she handled everything",
+            "expected": "Mama",
+            "got": "Mama",
+            "ok": true,
+            "unseen": true,
+            "text": "Mama, just wanted to tell you how proud I am of the way you handled everything today."
+          },
+          {
+            "instruction": "ask her to keep the parcel with the neighbour",
+            "expected": "Amma",
+            "got": "Amma",
+            "ok": true,
+            "unseen": true,
+            "text": "Amma, could you please leave the parcel with the neighbour? I won't be back in time before the delivery guy arrives."
+          },
+          {
+            "instruction": "write I love you",
+            "expected": "Mama",
+            "got": "Mama",
+            "ok": true,
+            "unseen": true,
+            "text": "Mama, I love you so much."
+          },
+          {
+            "instruction": "ask her whether the milk was delivered",
+            "expected": "Amma",
+            "got": "Amma",
+            "ok": true,
+            "unseen": true,
+            "text": "Amma, could you please check whether the milk was delivered today?"
+          }
+        ]
+      },
+      {
+        "stage": 2,
+        "seen": 30,
+        "seen_score": 1.0,
+        "unseen_score": 1.0,
+        "profile": {
+          "address_forms": [
+            {
+              "form": "Amma",
+              "when": "the message is practical, logistical, a reminder, an instruction, or casual/direct everyday coordination",
+              "examples": [
+                "Hey Amma, just wanted to let you know the electrician is coming over around four o'clock today, so someone will be there.",
+                "Amma, could you please go turn off the water motor now? It's been running for like twenty minutes.",
+                "Amma, just a quick reminder, please make sure you take your morning tablets before eating anything.",
+                "Amma, traffic is terrible, so I will reach home by 8 PM at least."
+              ]
+            },
+            {
+              "form": "Mama",
+              "when": "the message is emotional, affectionate, reassuring, apologetic, or expressing gratitude",
+              "examples": [
+                "Sorry, Mama, I completely forgot to call you last night. Things got so crazy at work.",
+                "Just really missing you today, Mama. Wish I could just drop by for a quick cup of chai.",
+                "Good luck with the check-up today, Mama. You are going to do great, and I will call you right after.",
+                "Mama, you sounded really tense on the phone just now. Please try to relax and take a nap, okay?"
+              ]
+            }
+          ],
+          "conditional_rules": [
+            {
+              "when": "the message is practical, logistical, or coordinating daily tasks",
+              "then": "use the address form 'Amma' and keep the tone direct, functional, and straightforward",
+              "evidence": [
+                "Amma, could you please go turn off the water motor now? It's been running for like twenty minutes.",
+                "Amma, just letting you know the electrician will reach our place by 10 AM.",
+                "Amma, please switch off the water motor now. The tank is already full."
+              ]
+            },
+            {
+              "when": "the message is emotional, reassuring, affectionate, apologetic, or expressing gratitude",
+              "then": "use the address form 'Mama' and write with a warmer, more expressive, and comforting tone",
+              "evidence": [
+                "Just really missing you today, Mama. Wish I could just drop by for a quick cup of chai.",
+                "Mama, you sounded so tense on the phone. Please don't worry, everything is totally fine.",
+                "Oh Mama, the package arrived today! Thank you so much for sending all those snacks, it really made my week."
+              ]
+            }
+          ],
+          "constants": [
+            "No formal sign-offs are used at the end of messages.",
+            "Messages are written in complete, well-punctuated sentences with natural contractions.",
+            "The address form is typically placed at the very beginning of the message (either first or immediately after a brief opener like 'Hey', 'Hi', 'So', or 'Oh'), but can occasionally be placed at the end of the first sentence."
+          ],
+          "summary": "The writer consistently addresses their mother as 'Amma' for practical, logistical, and direct everyday messages, but switches to 'Mama' for warm, emotional, reassuring, apologetic, or affectionate messages.",
+          "exceptions": [
+            {
+              "observed": "An unusually curt, annoyed, or sharp tone when busy ('Amma, stop calling me right now. I am in the middle of a critical meeting!')",
+              "times_seen": 1,
+              "note": "This is the only message where the writer expresses irritation or snaps at their mother; all other practical messages are polite and cooperative."
+            }
+          ],
+          "uncertain": [
+            "Whether they ever use formal greetings like 'Hello' or 'Dear', as only informal openers like 'Hey', 'Hi', 'So', and 'Oh' have been observed across 30 messages."
+          ]
+        },
+        "drafts": [
+          {
+            "instruction": "write I love you",
+            "expected": "Mama",
+            "got": "Mama",
+            "ok": true,
+            "unseen": false,
+            "text": "Mama, I love you."
+          },
+          {
+            "instruction": "tell her I will be home by 8",
+            "expected": "Amma",
+            "got": "Amma",
+            "ok": true,
+            "unseen": false,
+            "text": "Hey Amma, traffic is terrible, so I will reach home by 8 PM at least."
+          },
+          {
+            "instruction": "tell her I dreamt about her last night",
+            "expected": "Mama",
+            "got": "Mama",
+            "ok": true,
+            "unseen": true,
+            "text": "Mama, I dreamt about you last night."
+          },
+          {
+            "instruction": "tell her the flight on Tuesday got cancelled",
+            "expected": "Amma",
+            "got": "Amma",
+            "ok": true,
+            "unseen": true,
+            "text": "Amma, just wanted to let you know that my flight on Tuesday got cancelled, so I'll need to figure out alternate bookings."
+          },
+          {
+            "instruction": "tell her I am proud of how she handled everything",
+            "expected": "Mama",
+            "got": "Mama",
+            "ok": true,
+            "unseen": true,
+            "text": "Mama, I am so proud of how you handled everything today. You were incredible."
+          },
+          {
+            "instruction": "ask her to keep the parcel with the neighbour",
+            "expected": "Amma",
+            "got": "Amma",
+            "ok": true,
+            "unseen": true,
+            "text": "Amma, could you please leave the parcel with the neighbour if the delivery guy comes while you are stepping out?"
+          },
+          {
+            "instruction": "write I love you",
+            "expected": "Mama",
+            "got": "Mama",
+            "ok": true,
+            "unseen": true,
+            "text": "Mama, I love you."
+          },
+          {
+            "instruction": "ask her whether the milk was delivered",
+            "expected": "Amma",
+            "got": "Amma",
+            "ok": true,
+            "unseen": true,
+            "text": "Amma, just wanted to check in and ask whether the milk was delivered today."
+          }
+        ]
+      },
+      {
+        "stage": 3,
+        "seen": 45,
+        "seen_score": 1.0,
+        "unseen_score": 1.0,
+        "profile": {
+          "address_forms": [
+            {
+              "form": "Amma",
+              "when": "the message is practical, logistical, a reminder, an instruction, or casual/direct everyday coordination",
+              "examples": [
+                "Hey Amma, just wanted to let you know the electrician is coming over around four o'clock today, so someone will be there.",
+                "Amma, could you please go turn off the water motor now? It's been running for like twenty minutes.",
+                "Amma, just so you know, the electrician guy is supposed to be here sometime between ten and twelve today.",
+                "Amma, did you remember to take your afternoon tablets already? I'm just checking in on you."
+              ]
+            },
+            {
+              "form": "Mama",
+              "when": "the message is emotional, affectionate, reassuring, apologetic, or expressing gratitude",
+              "examples": [
+                "Sorry, Mama, I completely forgot to call you last night. Things got so crazy at work.",
+                "Just really missing you today, Mama. Wish I could just drop by for a quick cup of chai.",
+                "Mama, I just opened the box you shipped and honestly I am crying because those pickles taste just like home. Thank you.",
+                "Hey Mama, don't worry about me, okay? Everything is totally under control. You don't need to stress yourself out so much."
+              ]
+            }
+          ],
+          "conditional_rules": [
+            {
+              "when": "the message is practical, logistical, or coordinating daily tasks",
+              "then": "use the address form 'Amma' and keep the tone direct, functional, and straightforward",
+              "evidence": [
+                "Amma, could you please go turn off the water motor now? It's been running for like twenty minutes.",
+                "Amma, just so you know, the electrician guy is supposed to be here sometime between ten and twelve today.",
+                "Hey Amma, just giving you a heads up that the electrician is finally downstairs and he's heading up now."
+              ]
+            },
+            {
+              "when": "the message is emotional, reassuring, affectionate, apologetic, or expressing gratitude",
+              "then": "use the address form 'Mama' and write with a warmer, more expressive, and comforting tone",
+              "evidence": [
+                "Just really missing you today, Mama. Wish I could just drop by for a quick cup of chai.",
+                "Mama, please breathe. You sounded like you were really anxious on the phone earlier. I promise you I'm going to be fine.",
+                "Hey Mama, just wanted to say thank you so much for the care package you sent. The food is incredible; seriously, tasting it literally made my whole week."
+              ]
+            }
+          ],
+          "constants": [
+            "No formal sign-offs are used at the end of messages.",
+            "Messages are written in complete, well-punctuated sentences with natural contractions.",
+            "The address form is typically placed at the very beginning of the message (either first or immediately after a brief opener like 'Hey', 'Hi', 'So', or 'Oh'), but can occasionally be placed at the end of the first sentence.",
+            "Frequent use of casual conversational fillers (like 'literally', 'honestly', 'seriously', 'Um', 'Uh') in affectionate messages."
+          ],
+          "summary": "The writer consistently addresses their mother as 'Amma' for practical, logistical, and direct everyday messages, but switches to 'Mama' for warm, emotional, reassuring, apologetic, or affectionate messages.",
+          "exceptions": [
+            {
+              "observed": "An unusually curt, annoyed, or sharp tone when busy ('Amma, stop calling me right now. I am in the middle of a critical meeting!')",
+              "times_seen": 1,
+              "note": "This remains the only message where the writer expresses irritation or snaps at their mother; all other practical messages are polite and cooperative."
+            }
+          ],
+          "uncertain": [
+            "Whether they ever use formal greetings like 'Hello' or 'Dear', as only informal openers like 'Hey', 'Hi', 'So', and 'Oh' have been observed across 45 messages."
+          ]
+        },
+        "drafts": [
+          {
+            "instruction": "write I love you",
+            "expected": "Mama",
+            "got": "Mama",
+            "ok": true,
+            "unseen": false,
+            "text": "Mama, I love you."
+          },
+          {
+            "instruction": "tell her I will be home by 8",
+            "expected": "Amma",
+            "got": "Amma",
+            "ok": true,
+            "unseen": false,
+            "text": "Amma, just wanted to let you know I will be home by eight tonight."
+          },
+          {
+            "instruction": "tell her I dreamt about her last night",
+            "expected": "Mama",
+            "got": "Mama",
+            "ok": true,
+            "unseen": true,
+            "text": "Mama, I dreamt about you last night."
+          },
+          {
+            "instruction": "tell her the flight on Tuesday got cancelled",
+            "expected": "Amma",
+            "got": "Amma",
+            "ok": true,
+            "unseen": true,
+            "text": "Amma, just wanted to let you know that my flight on Tuesday got cancelled."
+          },
+          {
+            "instruction": "tell her I am proud of how she handled everything",
+            "expected": "Mama",
+            "got": "Mama",
+            "ok": true,
+            "unseen": true,
+            "text": "Mama, I just wanted to tell you how proud I am of you and the way you handled everything."
+          },
+          {
+            "instruction": "ask her to keep the parcel with the neighbour",
+            "expected": "Amma",
+            "got": "Amma",
+            "ok": true,
+            "unseen": true,
+            "text": "Amma, could you please ask the delivery person to leave the parcel with the neighbour since nobody will be home?"
+          },
+          {
+            "instruction": "write I love you",
+            "expected": "Mama",
+            "got": "Mama",
+            "ok": true,
+            "unseen": true,
+            "text": "Mama, I love you."
+          },
+          {
+            "instruction": "ask her whether the milk was delivered",
+            "expected": "Amma",
+            "got": "Amma",
+            "ok": true,
+            "unseen": true,
+            "text": "Amma, did the milk get delivered yet?"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "person": "Sanjay",
+    "kind": "structural",
+    "planted": "bad news always carries a proposed course of action; good news is one bare line",
+    "stages": [
+      {
+        "stage": 1,
+        "seen": 14,
+        "seen_score": 1.0,
+        "unseen_score": 1.0,
+        "profile": {
+          "address_forms": [
+            {
+              "form": "Sanjay",
+              "when": "Most of the time, at the very start of the message.",
+              "examples": [
+                "Sanjay, we are losing Dave to the Infrastructure squad effective next week, which hurts our bandwidth.",
+                "Sanjay, the connector work wrapped up ahead of schedule."
+              ]
+            },
+            {
+              "form": "Hey Sanjay",
+              "when": "Occasionally at the start of the message, without a clear functional pattern.",
+              "examples": [
+                "Hey Sanjay, the schema review is completely blocked and both dev teams are stuck waiting on it.",
+                "Hey Sanjay, the connector integration finished early."
+              ]
+            }
+          ],
+          "conditional_rules": [
+            {
+              "when": "the message reports a problem, blocker, or crisis",
+              "then": "always follow the report with a proposed action plan or recommendation, typically using phrases like 'Let's', 'I think we should', 'Let me', or 'I say we'.",
+              "evidence": [
+                "Hey Sanjay, the schema review is completely blocked and both dev teams are stuck waiting on it. I think we should pull it into our sync today and just force a decision.",
+                "Sanjay, we are losing Dave to the Infrastructure squad effective next week, which hurts our bandwidth. Let's shift the legacy migration to next quarter to absorb the hit.",
+                "Sanjay, we have a major Acme escalation causing production outages for them right now. Let me take the lead on the war room and I will rope in security.",
+                "Sanjay, we hit a snag. That critical security patch is going to push out the release date. I say we brief the stakeholders now and aim for a Thursday drop instead."
+              ]
+            },
+            {
+              "when": "the message reports a successful status update or completion",
+              "then": "keep the message to a single, short, declarative sentence with no proposed actions.",
+              "evidence": [
+                "Sanjay, the connector work wrapped up ahead of schedule.",
+                "Sanjay, just letting you know the current sprint closed right on time.",
+                "Sanjay, the sprint wrapped up successfully on schedule."
+              ]
+            }
+          ],
+          "constants": [
+            "Always starts the message by addressing Sanjay by name.",
+            "No sign-off or closing signature is used.",
+            "Uses complete, grammatically correct, and well-punctuated sentences."
+          ],
+          "summary": "The sender always addresses Sanjay by name at the start of the message, keeping positive status updates to a single sentence while pairing any reported problems with an immediate, proactive proposal for next steps.",
+          "exceptions": [
+            {
+              "observed": "Using 'So Sanjay' as the opening address form.",
+              "times_seen": 1,
+              "note": "Seen only in Message 13 ('So Sanjay, bad news...'). This is a one-off variation of the standard address forms."
+            }
+          ],
+          "uncertain": [
+            "Whether 'Hey Sanjay' is triggered by a specific context or is just a random stylistic variation."
+          ]
+        },
+        "drafts": [
+          {
+            "instruction": "tell him the release is delayed by a week",
+            "expected": "problem",
+            "got": "problem",
+            "ok": true,
+            "unseen": false,
+            "text": "Sanjay, the release is delayed by a week. I say we brief the stakeholders now and push the announcement to tomorrow morning."
+          },
+          {
+            "instruction": "tell him the migration finished",
+            "expected": "progress",
+            "got": "progress",
+            "ok": true,
+            "unseen": false,
+            "text": "Sanjay, the migration finished."
+          },
+          {
+            "instruction": "tell him our main database is close to running out of storage",
+            "expected": "problem",
+            "got": "problem",
+            "ok": true,
+            "unseen": true,
+            "text": "Sanjay, our main database is close to running out of storage. Let's provision additional disk space immediately and audit our log retention policies to free up capacity today."
+          },
+          {
+            "instruction": "tell him the new dashboard shipped to production",
+            "expected": "progress",
+            "got": "progress",
+            "ok": true,
+            "unseen": true,
+            "text": "Sanjay, the new dashboard shipped to production."
+          },
+          {
+            "instruction": "tell him two people are off sick and the sprint is at risk",
+            "expected": "problem",
+            "got": "problem",
+            "ok": true,
+            "unseen": true,
+            "text": "Sanjay, we have two people out sick and the sprint is at risk. Let's descoped the lower-priority backlog items immediately to protect our core deliverables."
+          },
+          {
+            "instruction": "tell him the API latency improved after the cache change",
+            "expected": "progress",
+            "got": "progress",
+            "ok": true,
+            "unseen": true,
+            "text": "Sanjay, the API latency improved after the cache change."
+          }
+        ]
+      },
+      {
+        "stage": 2,
+        "seen": 28,
+        "seen_score": 1.0,
+        "unseen_score": 1.0,
+        "profile": {
+          "address_forms": [
+            {
+              "form": "Sanjay",
+              "when": "Most of the time, at the very start of the message, regardless of whether it is a problem or a success.",
+              "examples": [
+                "Sanjay, Acme just escalated to the executive level because their staging environment went down.",
+                "Sanjay, Northwind officially signed off on the contract today."
+              ]
+            },
+            {
+              "form": "Hey Sanjay",
+              "when": "Frequently at the start of the message, as a stylistic variation with no functional pattern (used for both problems and successes).",
+              "examples": [
+                "Hey Sanjay, the pending schema review is stuck in limbo and it has completely blocked the backend guys.",
+                "Hey Sanjay, staging deploy went completely clean last night."
+              ]
+            },
+            {
+              "form": "So Sanjay",
+              "when": "Used occasionally specifically to introduce bad news or a project delay. Promoted from exceptions after appearing again.",
+              "examples": [
+                "So Sanjay, bad news...",
+                "So Sanjay, DSPM is delayed by two weeks due to dependency issues, and that pushes back our user beta."
+              ]
+            }
+          ],
+          "conditional_rules": [
+            {
+              "when": "the message reports a problem, blocker, or crisis",
+              "then": "always follow the report with a proposed action plan or recommendation, typically using proactive phrases like 'Let's', 'I think we should', 'Let me', 'I say we', 'I suggest we', 'I propose we', or 'My plan is to'.",
+              "evidence": [
+                "Hey Sanjay, the pending schema review is stuck in limbo and it has completely blocked the backend guys. Let's override it ourselves today so they can resume coding.",
+                "Sanjay, Acme just escalated to the executive level because their staging environment went down. I suggest we spin up a dedicated war room immediately to triage.",
+                "Sanjay, that security patch we found is forcing a delay on the main release. I propose we hold back the affected components and ship the rest on schedule.",
+                "So Sanjay, DSPM is delayed by two weeks due to dependency issues, and that pushes back our user beta. My plan is to reduce the test coverage requirements temporarily to claw back five days."
+              ]
+            },
+            {
+              "when": "the message reports a successful status update or completion",
+              "then": "keep the message to a single, short, declarative sentence with no proposed actions.",
+              "evidence": [
+                "Sanjay, Northwind officially signed off on the contract today.",
+                "Sanjay, just wanted to let you know the sprint closed on time.",
+                "Hey Sanjay, staging deploy went completely clean last night."
+              ]
+            },
+            {
+              "when": "delivering bad news or reporting a stressful problem",
+              "then": "the sender occasionally includes informal speech fillers like 'uh' or 'um'.",
+              "evidence": [
+                "Hey Sanjay, um, Acme is blowing up right now. Their production cluster just completely tanked, and they're threatening to churn. Um, I think we should pull the backend team off the current sprint and put everyone on triaging their logs immediately.",
+                "Sanjay, uh, DSPM is slipping by two weeks because of some unexpected crypto bugs, which means we'll miss the enterprise deadline.",
+                "Sanjay, uh, looks like Data Platform is poaching Alex from us starting next month, so we're gonna be shorthanded."
+              ]
+            }
+          ],
+          "constants": [
+            "Always starts the message by addressing Sanjay by name.",
+            "No sign-off or closing signature is used.",
+            "Uses complete, well-punctuated sentences."
+          ],
+          "summary": "The sender always addresses Sanjay by name at the start of the message, keeping positive status updates to a single sentence while pairing any reported problems with an immediate, proactive proposal for next steps, occasionally using speech fillers like 'uh' or 'um' when delivering bad news.",
+          "exceptions": [
+            {
+              "observed": "Using 'Hi Sanjay' as the opening address form.",
+              "times_seen": 1,
+              "note": "Seen only in Message 7 ('Hi Sanjay, the schema review is stalled...'). This is a one-off variation of the standard address forms."
+            },
+            {
+              "observed": "Using the informal contraction 'gonna'.",
+              "times_seen": 1,
+              "note": "Seen only in Message 11 ('...so we're gonna be shorthanded'). The sender otherwise adheres to standard spelling and grammar."
+            }
+          ],
+          "uncertain": [
+            "We have resolved the previous uncertainty about 'Hey Sanjay'—it is now confirmed to be a free stylistic variation with no functional pattern, as it appears across both high-stress problems and routine successes."
+          ]
+        },
+        "drafts": [
+          {
+            "instruction": "tell him the release is delayed by a week",
+            "expected": "problem",
+            "got": "problem",
+            "ok": true,
+            "unseen": false,
+            "text": "So Sanjay, the release is delayed by a week due to some unexpected testing blockers, and that's going to push back our customer rollout. My plan is to run an extra triage session this afternoon to fast-track the remaining fixes."
+          },
+          {
+            "instruction": "tell him the migration finished",
+            "expected": "progress",
+            "got": "progress",
+            "ok": true,
+            "unseen": false,
+            "text": "Sanjay, the migration finished successfully."
+          },
+          {
+            "instruction": "tell him our main database is close to running out of storage",
+            "expected": "problem",
+            "got": "problem",
+            "ok": true,
+            "unseen": true,
+            "text": "So Sanjay, um, our main database is close to running out of storage. I think we should purge the old audit logs today to free up some breathing room."
+          },
+          {
+            "instruction": "tell him the new dashboard shipped to production",
+            "expected": "progress",
+            "got": "progress",
+            "ok": true,
+            "unseen": true,
+            "text": "Sanjay, the new dashboard shipped to production."
+          },
+          {
+            "instruction": "tell him two people are off sick and the sprint is at risk",
+            "expected": "problem",
+            "got": "problem",
+            "ok": true,
+            "unseen": true,
+            "text": "So Sanjay, uh, two people are off sick and now the sprint is at risk. I propose we drop the lowest-priority ticket from the backlog to protect our current velocity."
+          },
+          {
+            "instruction": "tell him the API latency improved after the cache change",
+            "expected": "progress",
+            "got": "progress",
+            "ok": true,
+            "unseen": true,
+            "text": "Sanjay, the API latency improved after the cache change."
+          }
+        ]
+      },
+      {
+        "stage": 3,
+        "seen": 42,
+        "seen_score": 1.0,
+        "unseen_score": 0.75,
+        "profile": {
+          "address_forms": [
+            {
+              "form": "Sanjay",
+              "when": "Most of the time, at the very start of the message, regardless of whether it is a problem or a success.",
+              "examples": [
+                "Sanjay, Acme just escalated to the executive level because their staging environment went down.",
+                "Sanjay, Northwind officially signed off on the contract today.",
+                "Sanjay, the staging deploy finished cleanly about ten minutes ago."
+              ]
+            },
+            {
+              "form": "Hey Sanjay",
+              "when": "Frequently at the start of the message, as a stylistic variation with no functional pattern (used for both problems and successes).",
+              "examples": [
+                "Hey Sanjay, the pending schema review is stuck in limbo and it has completely blocked the backend guys.",
+                "Hey Sanjay, staging deploy went completely clean last night.",
+                "Hey Sanjay, Marcus got officially transferred to the data platform team effective Monday..."
+              ]
+            },
+            {
+              "form": "So Sanjay",
+              "when": "Used occasionally specifically to introduce bad news or a project delay.",
+              "examples": [
+                "So Sanjay, bad news...",
+                "So Sanjay, DSPM is delayed by two weeks due to dependency issues, and that pushes back our user beta."
+              ]
+            },
+            {
+              "form": "None (omitted entirely)",
+              "when": "Sometimes when reporting a successful status update or completion. Promoted from exceptions after appearing twice in the new batch.",
+              "examples": [
+                "Staging deployment completed cleanly just like we planned.",
+                "The connector task wrapped up ahead of schedule."
+              ]
+            }
+          ],
+          "conditional_rules": [
+            {
+              "when": "the message reports a problem, blocker, or crisis",
+              "then": "always follow the report with a proposed action plan or recommendation, typically using proactive phrases like 'Let's', 'I think we should', 'Let me', 'I say we', 'I suggest we', 'I propose we', 'My plan is to', or 'I am going to'.",
+              "evidence": [
+                "Hey Sanjay, the pending schema review is stuck in limbo and it has completely blocked the backend guys. Let's override it ourselves today so they can resume coding.",
+                "Sanjay, Acme just escalated to the executive level because their staging environment went down. I suggest we spin up a dedicated war room immediately to triage.",
+                "Sanjay, we have a major customer escalation on Acme; their primary ingestion pipeline is totally stalled. I am going to jump on a bridge with their dev lead right now to diagnose it.",
+                "Sanjay, the DSPM release is delayed by two weeks due to the compliance audit delays, and that will push back our public beta launch. My plan is to cut the lower priority reporting features from this batch so we can ship the core module on the new schedule."
+              ]
+            },
+            {
+              "when": "the message reports a successful status update or completion",
+              "then": "keep the message to a single, short, declarative sentence with no proposed actions.",
+              "evidence": [
+                "Sanjay, Northwind officially signed off on the contract today.",
+                "Sanjay, just wanted to let you know the sprint closed on time.",
+                "Hey Sanjay, staging deploy went completely clean last night.",
+                "Sanjay, the staging deploy finished cleanly about ten minutes ago.",
+                "The connector task wrapped up ahead of schedule."
+              ]
+            },
+            {
+              "when": "delivering bad news or reporting a stressful problem",
+              "then": "the sender occasionally includes informal speech fillers like 'uh' or 'um' and the informal contraction 'gonna'.",
+              "evidence": [
+                "Hey Sanjay, um, Acme is blowing up right now. Their production cluster just completely tanked, and they're threatening to churn. Um, I think we should pull the backend team off the current sprint and put everyone on triaging their logs immediately.",
+                "Sanjay, uh, DSPM is slipping by two weeks because of some unexpected crypto bugs, which means we'll miss the enterprise deadline.",
+                "Hey Sanjay, um, Acme is completely down for their US East region right now. Uh, thousands of users can't log in, so I'm gonna jump on the bridge with support and grab the latest logs to see where it broke.",
+                "Hey Sanjay, uh, we've got a major crisis with Acme. Their billing pipeline is throwing 500 errors on every transaction, so I'm gonna page the on-call database admin right now to get eyes on it."
+              ]
+            }
+          ],
+          "constants": [
+            "No sign-off or closing signature is used.",
+            "Uses complete, well-punctuated sentences."
+          ],
+          "summary": "The sender typically addresses Sanjay by name at the start of the message (though sometimes omitting it for successful updates), keeping positive status updates to a single sentence while pairing any reported problems with an immediate, proactive proposal for next steps, occasionally using speech fillers like 'uh' or 'um' and the contraction 'gonna' when delivering bad news.",
+          "exceptions": [
+            {
+              "observed": "Using 'Hi Sanjay' as the opening address form.",
+              "times_seen": 1,
+              "note": "Seen only in Message 7 of the first batch ('Hi Sanjay, the schema review is stalled...'). This is a one-off variation of the standard address forms."
+            },
+            {
+              "observed": "Placing the address 'Sanjay' at the very end of the message.",
+              "times_seen": 1,
+              "note": "Seen only in Message 5 of the second batch ('Northwind finally signed the paperwork today, Sanjay.')."
+            }
+          ],
+          "uncertain": [
+            "Whether the omission of the address in successful updates is a permanent shift toward more casual status reporting or just a minor variation."
+          ]
+        },
+        "drafts": [
+          {
+            "instruction": "tell him the release is delayed by a week",
+            "expected": "problem",
+            "got": "problem",
+            "ok": true,
+            "unseen": false,
+            "text": "So Sanjay, the release is delayed by a week due to some unexpected testing blockers, and that will push back our deployment schedule. My plan is to run an extra round of regression tests tomorrow so we can catch any remaining edge cases before we cut the final build."
+          },
+          {
+            "instruction": "tell him the migration finished",
+            "expected": "progress",
+            "got": "progress",
+            "ok": true,
+            "unseen": false,
+            "text": "The migration finished cleanly."
+          },
+          {
+            "instruction": "tell him our main database is close to running out of storage",
+            "expected": "problem",
+            "got": "progress",
+            "ok": false,
+            "unseen": true,
+            "text": "Sanjay, uh, our main database is close to running out of storage. I'm gonna reach out to infrastructure and have them provision more disk space immediately."
+          },
+          {
+            "instruction": "tell him the new dashboard shipped to production",
+            "expected": "progress",
+            "got": "progress",
+            "ok": true,
+            "unseen": true,
+            "text": "Sanjay, the new dashboard shipped to production."
+          },
+          {
+            "instruction": "tell him two people are off sick and the sprint is at risk",
+            "expected": "problem",
+            "got": "problem",
+            "ok": true,
+            "unseen": true,
+            "text": "So Sanjay, bad news... two people are off sick and the sprint is at risk. I think we should descope the secondary features right now so we can still hit our primary delivery target."
+          },
+          {
+            "instruction": "tell him the API latency improved after the cache change",
+            "expected": "progress",
+            "got": "progress",
+            "ok": true,
+            "unseen": true,
+            "text": "Sanjay, the API latency improved after the cache change."
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "person": "Priya",
+    "kind": "pragmatic",
+    "planted": "asks are hedged when not urgent, and completely unhedged when they are",
+    "stages": [
+      {
+        "stage": 1,
+        "seen": 13,
+        "seen_score": 1.0,
+        "unseen_score": 1.0,
+        "profile": {
+          "address_forms": [
+            {
+              "form": "Priya (without greeting)",
+              "when": "when the message is urgent, such as a broken build or an impending demo",
+              "examples": [
+                "Priya, the demo starts in ten minutes. Get on the call now.",
+                "Production is down. Drop everything and join the bridge right now, Priya.",
+                "The build is totally broken and nobody can merge. Fix it immediately, Priya."
+              ]
+            },
+            {
+              "form": "Hey Priya",
+              "when": "when making a casual, non-urgent request",
+              "examples": [
+                "Hey Priya, whenever you have a second, could you maybe look at the test data I sent over?",
+                "Hey Priya, no rush at all, but could you perhaps update that document when you can?"
+              ]
+            }
+          ],
+          "conditional_rules": [
+            {
+              "when": "the situation is urgent (e.g., a demo starting in ten minutes or a system outage)",
+              "then": "the message is direct, uses imperatives, demands immediate action with words like 'now' or 'immediately', and contains no greeting",
+              "evidence": [
+                "Priya, ten minutes to the client demo. Join the room immediately.",
+                "Bad data is hitting the export report. Fix this before the client sees it, Priya.",
+                "Priya, the customer demo starts in ten minutes. Get on the bridge now."
+              ]
+            },
+            {
+              "when": "making a low-priority or non-urgent request",
+              "then": "the message is extremely polite, tentative, and heavily hedged with phrases like 'whenever you have a second', 'could you maybe', 'perhaps', or 'no rush'",
+              "evidence": [
+                "Hey Priya, whenever you have a free moment, could you maybe look over that test data?",
+                "Hey Priya, no rush at all, but could you perhaps update that document when you can?"
+              ]
+            }
+          ],
+          "constants": [
+            "Always addresses the recipient by name ('Priya') in every message.",
+            "Always uses complete sentences with standard capitalization and punctuation."
+          ],
+          "summary": "This writer is direct, demanding, and urgent during work emergencies and demo countdowns, but shifts to an extremely polite, tentative, and hedged tone when making non-urgent requests.",
+          "exceptions": [
+            {
+              "observed": "Priya, hi. Um, if you get a chance today, do you mind taking a quick look at some test data?",
+              "times_seen": 1,
+              "note": "This is the only message that uses 'hi. Um,' as a hesitant greeting instead of 'Hey Priya' or no greeting."
+            }
+          ],
+          "uncertain": [
+            "Whether they would ever use a greeting for an urgent message if the situation was slightly less time-sensitive.",
+            "Whether they use other casual greetings like 'Hi Priya' or 'Hello Priya' under different circumstances."
+          ]
+        },
+        "drafts": [
+          {
+            "instruction": "ask her to review my pull request",
+            "expected": "relaxed",
+            "got": "relaxed",
+            "ok": true,
+            "unseen": false,
+            "text": "Hey Priya, whenever you have a second, could you maybe look at my pull request?"
+          },
+          {
+            "instruction": "tell her the payments service is down and I need her now",
+            "expected": "urgent",
+            "got": "urgent",
+            "ok": true,
+            "unseen": false,
+            "text": "Priya, the payments service is down. Get on the bridge now."
+          },
+          {
+            "instruction": "ask her to take a look at the onboarding copy sometime",
+            "expected": "relaxed",
+            "got": "relaxed",
+            "ok": true,
+            "unseen": true,
+            "text": "Hey Priya, whenever you have a second, could you maybe take a look at the onboarding copy sometime?"
+          },
+          {
+            "instruction": "tell her customer data is leaking into the logs right now",
+            "expected": "urgent",
+            "got": "urgent",
+            "ok": true,
+            "unseen": true,
+            "text": "Priya, customer data is leaking into the logs right now. Fix it immediately."
+          },
+          {
+            "instruction": "ask her opinion on renaming the settings page",
+            "expected": "relaxed",
+            "got": "relaxed",
+            "ok": true,
+            "unseen": true,
+            "text": "Hey Priya, whenever you have a second, could you perhaps share your thoughts on renaming the settings page?"
+          },
+          {
+            "instruction": "tell her the release train leaves in fifteen minutes and the tests are red",
+            "expected": "urgent",
+            "got": "urgent",
+            "ok": true,
+            "unseen": true,
+            "text": "Priya, the release train leaves in fifteen minutes and the tests are red. Fix this now."
+          }
+        ]
+      },
+      {
+        "stage": 2,
+        "seen": 26,
+        "seen_score": 1.0,
+        "unseen_score": 1.0,
+        "profile": {
+          "address_forms": [
+            {
+              "form": "Priya (without greeting)",
+              "when": "when the message is urgent, such as a broken build, system outage, or impending demo",
+              "examples": [
+                "Priya, the demo begins in ten minutes. Join the room immediately.",
+                "Priya, production is down. Get on the bridge immediately.",
+                "Priya, we have corrupted customer records hitting the API right now. Fix the query filter instantly."
+              ]
+            },
+            {
+              "form": "Hey Priya (or variations like 'Hey, uh, Priya' or 'So, Priya')",
+              "when": "when making a casual, non-urgent request",
+              "examples": [
+                "Hey Priya, whenever suits you, could you let me know your thoughts on the new design?",
+                "Hey, uh, Priya, if you get a spare moment, could you update the architecture doc when you can? Thanks.",
+                "So, Priya, if you happen to have some free time today, would you mind taking a peek at the latest staging metrics?"
+              ]
+            }
+          ],
+          "conditional_rules": [
+            {
+              "when": "the situation is urgent (e.g., a demo starting, a broken build, or a production outage)",
+              "then": "the message is direct, uses imperatives, demands immediate action with words like 'now', 'immediately', 'this second', or 'instantly', and contains no greeting",
+              "evidence": [
+                "Priya, stop what you are doing. Bad data is going out to the client right now. Fix it.",
+                "Priya, the main build is broken and everyone is blocked. Investigate this second.",
+                "Priya, we have corrupted customer records hitting the API right now. Fix the query filter instantly."
+              ]
+            },
+            {
+              "when": "making a low-priority or non-urgent request",
+              "then": "the message is extremely polite, tentative, and heavily hedged with phrases like 'whenever suits you', 'could you maybe', 'would you mind', and often includes hesitant fillers like 'um' or 'uh'",
+              "evidence": [
+                "Hey Priya, um, whenever you have a second, could you maybe glance at those test results I pulled?",
+                "Hey, uh, Priya, if you get a spare moment, could you update the architecture doc when you can? Thanks.",
+                "So, Priya, if you happen to have some free time today, would you mind taking a peek at the latest staging metrics?"
+              ]
+            }
+          ],
+          "constants": [
+            "Always addresses the recipient by name ('Priya') in every message.",
+            "Always uses complete sentences with standard capitalization and punctuation."
+          ],
+          "summary": "This writer is direct, demanding, and urgent during work emergencies, omitting greetings entirely, but shifts to an extremely polite, tentative, and heavily hedged tone with hesitant fillers when making non-urgent requests.",
+          "exceptions": [
+            {
+              "observed": "Emergency, drop everything and join the incident channel. The checkout flow just crashed.",
+              "times_seen": 1,
+              "note": "This is the only message where the recipient is not addressed by name ('Priya'), contradicting the constant rule, likely due to the extreme urgency of the checkout flow crashing."
+            }
+          ],
+          "uncertain": [
+            "Whether they would ever use a greeting for an urgent message if the situation was slightly less time-sensitive.",
+            "Whether they use standard casual greetings like 'Hi Priya' or 'Hello Priya' under different circumstances."
+          ]
+        },
+        "drafts": [
+          {
+            "instruction": "ask her to review my pull request",
+            "expected": "relaxed",
+            "got": "relaxed",
+            "ok": true,
+            "unseen": false,
+            "text": "Hey Priya, um, whenever you have a spare moment, would you mind taking a look at my pull request?"
+          },
+          {
+            "instruction": "tell her the payments service is down and I need her now",
+            "expected": "urgent",
+            "got": "urgent",
+            "ok": true,
+            "unseen": false,
+            "text": "Priya, the payments service is down. Get on the bridge immediately."
+          },
+          {
+            "instruction": "ask her to take a look at the onboarding copy sometime",
+            "expected": "relaxed",
+            "got": "relaxed",
+            "ok": true,
+            "unseen": true,
+            "text": "Hey Priya, um, whenever you get a spare moment, would you mind taking a look at the onboarding copy when you can?"
+          },
+          {
+            "instruction": "tell her customer data is leaking into the logs right now",
+            "expected": "urgent",
+            "got": "urgent",
+            "ok": true,
+            "unseen": true,
+            "text": "Priya, customer data is leaking into the logs right now. Fix it immediately."
+          },
+          {
+            "instruction": "ask her opinion on renaming the settings page",
+            "expected": "relaxed",
+            "got": "relaxed",
+            "ok": true,
+            "unseen": true,
+            "text": "Hey Priya, um, whenever you have a spare moment, would you mind letting me know your thoughts on renaming the settings page?"
+          },
+          {
+            "instruction": "tell her the release train leaves in fifteen minutes and the tests are red",
+            "expected": "urgent",
+            "got": "urgent",
+            "ok": true,
+            "unseen": true,
+            "text": "Priya, the release train leaves in fifteen minutes and the tests are red. Fix this right now."
+          }
+        ]
+      },
+      {
+        "stage": 3,
+        "seen": 40,
+        "seen_score": 1.0,
+        "unseen_score": 1.0,
+        "profile": {
+          "address_forms": [
+            {
+              "form": "Priya (without greeting)",
+              "when": "when the message is urgent, such as a broken build, system outage, or impending demo",
+              "examples": [
+                "Priya, stop what you are doing. Bad data is hitting the customer endpoint right now. Fix it immediately.",
+                "Priya, demo starts in ten minutes. Get on the Zoom link now.",
+                "Priya, drop everything. There is a bad data payload hitting the client right now. Fix it immediately."
+              ]
+            },
+            {
+              "form": "Hey Priya or Hi Priya (sometimes with hesitant fillers like 'Hey, uh, Priya' or 'Hey Priya, um')",
+              "when": "when making a casual, non-urgent request",
+              "examples": [
+                "Hey Priya, just whenever you get a chance, could you review that test data dump I dropped in Slack?",
+                "Hi Priya, um, sort of whenever you are free, could you possibly refresh that slide deck?",
+                "Hi Priya, no rush on this at all, but if you could perhaps update that slide deck sometime this week, that would be great."
+              ]
+            }
+          ],
+          "conditional_rules": [
+            {
+              "when": "the situation is urgent (e.g., a demo starting, a broken build, or a production outage)",
+              "then": "the message is direct, uses imperatives, demands immediate action with words like 'now', 'immediately', 'this second', or 'instantly', and contains no greeting",
+              "evidence": [
+                "Priya, stop what you are doing. Bad data is hitting the customer endpoint right now. Fix it immediately.",
+                "Priya, demo starts in ten minutes. Get on the Zoom link now.",
+                "Priya, drop everything. There is a bad data payload hitting the client right now. Fix it immediately."
+              ]
+            },
+            {
+              "when": "making a low-priority or non-urgent request",
+              "then": "the message is extremely polite, tentative, and heavily hedged with phrases like 'whenever suits you', 'could you maybe', 'would you mind', and often includes hesitant fillers like 'um' or 'uh'",
+              "evidence": [
+                "Hey Priya, um, whenever you have a second, could you maybe update that architecture doc if you get a chance?",
+                "Hey Priya, uh, if you wouldn't mind, could you take a look at the latest test data sometime this week?",
+                "Hi Priya, um, sort of whenever you are free, could you possibly refresh that slide deck?"
+              ]
+            }
+          ],
+          "constants": [
+            "Always addresses the recipient by name ('Priya') in every message.",
+            "Always uses complete sentences with standard capitalization and punctuation."
+          ],
+          "summary": "This writer is direct, demanding, and urgent during work emergencies, omitting greetings entirely, but shifts to an extremely polite, tentative, and heavily hedged tone with hesitant fillers and greetings like 'Hey Priya' or 'Hi Priya' when making non-urgent requests.",
+          "exceptions": [
+            {
+              "observed": "Emergency, drop everything and join the incident channel. The checkout flow just crashed.",
+              "times_seen": 1,
+              "note": "This is the only message where the recipient is not addressed by name ('Priya'), contradicting the constant rule, likely due to the extreme urgency of the checkout flow crashing."
+            }
+          ],
+          "uncertain": [
+            "Whether they would ever use a greeting for an urgent message if the situation was slightly less time-sensitive."
+          ]
+        },
+        "drafts": [
+          {
+            "instruction": "ask her to review my pull request",
+            "expected": "relaxed",
+            "got": "relaxed",
+            "ok": true,
+            "unseen": false,
+            "text": "Hey Priya, um, whenever you have a second, could you maybe review my pull request if you get a chance?"
+          },
+          {
+            "instruction": "tell her the payments service is down and I need her now",
+            "expected": "urgent",
+            "got": "urgent",
+            "ok": true,
+            "unseen": false,
+            "text": "Priya, the payments service is down. Get on the incident channel right now."
+          },
+          {
+            "instruction": "ask her to take a look at the onboarding copy sometime",
+            "expected": "relaxed",
+            "got": "relaxed",
+            "ok": true,
+            "unseen": true,
+            "text": "Hey Priya, um, whenever you have a second, could you maybe take a look at the onboarding copy if you get a chance?"
+          },
+          {
+            "instruction": "tell her customer data is leaking into the logs right now",
+            "expected": "urgent",
+            "got": "urgent",
+            "ok": true,
+            "unseen": true,
+            "text": "Priya, stop what you are doing. Customer data is leaking into the logs right now. Fix it immediately."
+          },
+          {
+            "instruction": "ask her opinion on renaming the settings page",
+            "expected": "relaxed",
+            "got": "relaxed",
+            "ok": true,
+            "unseen": true,
+            "text": "Hey Priya, um, whenever you have a second, could you maybe let me know your thoughts on renaming the settings page if you get a chance?"
+          },
+          {
+            "instruction": "tell her the release train leaves in fifteen minutes and the tests are red",
+            "expected": "urgent",
+            "got": "urgent",
+            "ok": true,
+            "unseen": true,
+            "text": "Priya, release train leaves in fifteen minutes and the tests are red. Fix this right now."
+          }
+        ]
+      }
+    ]
+  }
+]

@@ -1,0 +1,428 @@
+[
+  {
+    "stage": 1,
+    "messages_seen": 15,
+    "score": 1.0,
+    "seen_score": 1.0,
+    "unseen_score": 1.0,
+    "profile": {
+      "address_forms": [
+        {
+          "form": "Mama",
+          "when": "when expressing affection, nostalgia, reassurance, or missing her",
+          "examples": [
+            "Hey Mama, I promise I am eating all my veggies, so please don't worry about me.",
+            "I wish you were here right beside me, Mama, because I miss you so much.",
+            "I miss you so much, Mama. I really wish we could talk tonight."
+          ]
+        },
+        {
+          "form": "Amma",
+          "when": "when discussing practical matters, reminders, logistics, or daily tasks",
+          "examples": [
+            "Amma, just wanted to remind you about our Friday morning trip to the temple.",
+            "Amma, can you please turn off the water pump now?",
+            "Can you text me the full address for the courier please, Amma?"
+          ]
+        }
+      ],
+      "conditional_rules": [
+        {
+          "when": "the message is affectionate or nostalgic",
+          "then": "use 'Mama', express feelings of missing her or loving her, and refer to food or home",
+          "evidence": [
+            "The kitchen is so quiet now, Mama, because nobody is making those amazing parathas.",
+            "Sleep well and sweet dreams, Mama. Love you loads.",
+            "The kitchen feels so quiet without you making all those snacks, Mama."
+          ]
+        },
+        {
+          "when": "the message is practical, logistical, or a reminder",
+          "then": "use 'Amma' and ask a direct question or state a task",
+          "evidence": [
+            "Did the cleaner lady show up this morning, Amma?",
+            "Did you remember to take your afternoon tablets on time, Amma?",
+            "Will ring you right after my work meeting gets over, Amma."
+          ]
+        }
+      ],
+      "constants": [
+        "Every message addresses her as either 'Mama' or 'Amma'.",
+        "No formal sign-offs are used.",
+        "Messages are written in complete sentences with proper capitalization and punctuation."
+      ],
+      "summary": "The writer uses 'Mama' for warm, affectionate, and nostalgic messages, but switches to 'Amma' for practical questions, reminders, and logistics.",
+      "uncertain": [
+        "Whether 'Amma' is ever used in affectionate messages or 'Mama' in purely practical ones.",
+        "Whether greetings are typically avoided, as 'Hey' only appears once."
+      ]
+    },
+    "drafts": [
+      {
+        "instruction": "write I love you",
+        "expected": "Mama",
+        "got": "Mama",
+        "ok": true,
+        "why": "affection - the headline case",
+        "text": "I love you so much, Mama.",
+        "unseen": false
+      },
+      {
+        "instruction": "tell her I will be home by 8",
+        "expected": "Amma",
+        "got": "Amma",
+        "ok": true,
+        "why": "control - routine",
+        "text": "Amma, just letting you know that I will be home by 8.",
+        "unseen": false
+      },
+      {
+        "instruction": "ask if she took her tablets",
+        "expected": "Amma",
+        "got": "Amma",
+        "ok": true,
+        "why": "control - practical",
+        "text": "Did you remember to take your tablets today, Amma?",
+        "unseen": false
+      },
+      {
+        "instruction": "tell her I got the promotion at work today",
+        "expected": "Mama",
+        "got": "Mama",
+        "ok": true,
+        "why": "unseen: celebration - not in any topic list",
+        "text": "Mama, I am so excited to tell you that I finally got the promotion at work today!",
+        "unseen": true
+      },
+      {
+        "instruction": "ask her for the wifi password at home",
+        "expected": "Amma",
+        "got": "Amma",
+        "ok": true,
+        "why": "unseen: trivial logistics",
+        "text": "Amma, can you please text me the wifi password for the house?",
+        "unseen": true
+      },
+      {
+        "instruction": "tell her I dreamt about her last night",
+        "expected": "Mama",
+        "got": "Mama",
+        "ok": true,
+        "why": "unseen: tender, no overlap with training topics",
+        "text": "I dreamt about you last night, Mama, and I miss you so much.",
+        "unseen": true
+      },
+      {
+        "instruction": "tell her the flight on Tuesday got cancelled",
+        "expected": "Amma",
+        "got": "Amma",
+        "ok": true,
+        "why": "unseen: factual travel news",
+        "text": "Amma, my flight on Tuesday got cancelled so I need to figure out what to do next.",
+        "unseen": true
+      },
+      {
+        "instruction": "tell her I am really proud of how she handled everything",
+        "expected": "Mama",
+        "got": "Mama",
+        "ok": true,
+        "why": "unseen: pride, phrased unlike anything in the corpus",
+        "text": "I am really proud of how you handled everything, Mama.",
+        "unseen": true
+      },
+      {
+        "instruction": "ask her to keep the parcel with the neighbour",
+        "expected": "Amma",
+        "got": "Amma",
+        "ok": true,
+        "why": "unseen: errand",
+        "text": "Amma, can you please keep the parcel with the neighbour?",
+        "unseen": true
+      }
+    ]
+  },
+  {
+    "stage": 2,
+    "messages_seen": 30,
+    "score": 1.0,
+    "seen_score": 1.0,
+    "unseen_score": 1.0,
+    "profile": {
+      "address_forms": [
+        {
+          "form": "Mama",
+          "when": "when expressing affection, nostalgia, reassurance, or missing her",
+          "examples": [
+            "Thinking of you today, Mama. I really miss your hugs.",
+            "This place is so quiet without your food, Mama. I miss it.",
+            "Best of luck with the doctor visit today, Mama. You will do great!"
+          ]
+        },
+        {
+          "form": "Amma",
+          "when": "when discussing practical matters, reminders, logistics, or daily tasks",
+          "examples": [
+            "Amma, please keep the gas cylinder receipt safely. Someone will come to collect it.",
+            "Did Appa reach the bank safely yet, Amma? Let me know.",
+            "Amma, I just cleared the power bill online just now."
+          ]
+        }
+      ],
+      "conditional_rules": [
+        {
+          "when": "the message is affectionate, nostalgic, or supportive",
+          "then": "use 'Mama', express feelings of missing her, loving her, or wishing her well, and often refer to food, hugs, or home",
+          "evidence": [
+            "Thinking of you today, Mama. I really miss your hugs.",
+            "This place is so quiet without your food, Mama. I miss it.",
+            "Best of luck with the doctor visit today, Mama. You will do great!"
+          ]
+        },
+        {
+          "when": "the message is practical, logistical, or a reminder",
+          "then": "use 'Amma' and ask a direct question, state a task, or give a status update",
+          "evidence": [
+            "Amma, please keep the gas cylinder receipt safely. Someone will come to collect it.",
+            "Did Appa reach the bank safely yet, Amma? Let me know.",
+            "Amma, I just cleared the power bill online just now."
+          ]
+        }
+      ],
+      "constants": [
+        "Every message addresses her as either 'Mama' or 'Amma'.",
+        "No formal sign-offs are used.",
+        "Messages are written in complete sentences with proper capitalization and punctuation.",
+        "Greetings are almost always omitted, with 'Hey' appearing very rarely."
+      ],
+      "summary": "The writer maintains a strict division between using 'Mama' for warm, affectionate, and supportive messages, and 'Amma' for practical logistics, reminders, and daily updates.",
+      "uncertain": [
+        "Whether 'Mama' would be used in a negative emotional context, as all affectionate messages are positive or reassuring."
+      ]
+    },
+    "drafts": [
+      {
+        "instruction": "write I love you",
+        "expected": "Mama",
+        "got": "Mama",
+        "ok": true,
+        "why": "affection - the headline case",
+        "text": "Thinking of you today, Mama. I love you so much!",
+        "unseen": false
+      },
+      {
+        "instruction": "tell her I will be home by 8",
+        "expected": "Amma",
+        "got": "Amma",
+        "ok": true,
+        "why": "control - routine",
+        "text": "Amma, I will be home by 8.",
+        "unseen": false
+      },
+      {
+        "instruction": "ask if she took her tablets",
+        "expected": "Amma",
+        "got": "Amma",
+        "ok": true,
+        "why": "control - practical",
+        "text": "Amma, did you take your tablets today? Let me know.",
+        "unseen": false
+      },
+      {
+        "instruction": "tell her I got the promotion at work today",
+        "expected": "Mama",
+        "got": "Mama",
+        "ok": true,
+        "why": "unseen: celebration - not in any topic list",
+        "text": "Thinking of you today, Mama. I got the promotion at work today and I can't wait to celebrate with you.",
+        "unseen": true
+      },
+      {
+        "instruction": "ask her for the wifi password at home",
+        "expected": "Amma",
+        "got": "Amma",
+        "ok": true,
+        "why": "unseen: trivial logistics",
+        "text": "Amma, could you please send me the wifi password for home?",
+        "unseen": true
+      },
+      {
+        "instruction": "tell her I dreamt about her last night",
+        "expected": "Mama",
+        "got": "Mama",
+        "ok": true,
+        "why": "unseen: tender, no overlap with training topics",
+        "text": "Thinking of you today, Mama. I actually dreamt about you last night.",
+        "unseen": true
+      },
+      {
+        "instruction": "tell her the flight on Tuesday got cancelled",
+        "expected": "Amma",
+        "got": "Amma",
+        "ok": true,
+        "why": "unseen: factual travel news",
+        "text": "Amma, my flight on Tuesday got cancelled. I am trying to figure out what to do next.",
+        "unseen": true
+      },
+      {
+        "instruction": "tell her I am really proud of how she handled everything",
+        "expected": "Mama",
+        "got": "Mama",
+        "ok": true,
+        "why": "unseen: pride, phrased unlike anything in the corpus",
+        "text": "Thinking of you today, Mama. I am really proud of how you handled everything.",
+        "unseen": true
+      },
+      {
+        "instruction": "ask her to keep the parcel with the neighbour",
+        "expected": "Amma",
+        "got": "Amma",
+        "ok": true,
+        "why": "unseen: errand",
+        "text": "Amma, please keep the parcel with the neighbour when it arrives.",
+        "unseen": true
+      }
+    ]
+  },
+  {
+    "stage": 3,
+    "messages_seen": 45,
+    "score": 0.8888888888888888,
+    "seen_score": 1.0,
+    "unseen_score": 0.8333333333333334,
+    "profile": {
+      "address_forms": [
+        {
+          "form": "Mama",
+          "when": "when expressing affection, nostalgia, reassurance, missing her, or apologizing",
+          "examples": [
+            "I am so sorry, Mama, I haven't called you in a few days.",
+            "Mama, I love you so much, and I'll call you as soon as my flight lands.",
+            "Mama, I am just so proud of how strong you have been lately."
+          ]
+        },
+        {
+          "form": "Amma",
+          "when": "when discussing practical matters, reminders, logistics, daily tasks, or asking about daily routines like meals",
+          "examples": [
+            "I should be reaching home around seven PM today, Amma.",
+            "Don't forget, Amma, we have that temple visit scheduled for Friday.",
+            "What did you cook for lunch today, Amma?"
+          ]
+        }
+      ],
+      "conditional_rules": [
+        {
+          "when": "the message is affectionate, nostalgic, supportive, or apologetic",
+          "then": "use 'Mama', express feelings of love, missing her, pride, or reassurance, and use emotional language",
+          "evidence": [
+            "I am so sorry, Mama, I haven't called you in a few days.",
+            "Mama, I love you so much, and I'll call you as soon as my flight lands.",
+            "Mama, I am just so proud of how strong you have been lately."
+          ]
+        },
+        {
+          "when": "the message is practical, logistical, a reminder, or asking about daily routines",
+          "then": "use 'Amma' and ask a direct question, state a task, or give a status update",
+          "evidence": [
+            "I should be reaching home around seven PM today, Amma.",
+            "Don't forget, Amma, we have that temple visit scheduled for Friday.",
+            "What did you cook for lunch today, Amma?"
+          ]
+        }
+      ],
+      "constants": [
+        "Every message addresses her as either 'Mama' or 'Amma'.",
+        "No formal sign-offs are used.",
+        "Messages are written in complete sentences with proper capitalization and punctuation.",
+        "Greetings are almost always omitted."
+      ],
+      "summary": "The writer maintains a strict division between using 'Mama' for emotional, affectionate, supportive, or apologetic messages, and 'Amma' for practical logistics, reminders, and daily routine updates.",
+      "uncertain": [
+        "Whether 'Mama' is used for expressing anger or frustration, as the emotional contexts observed so far remain loving, reassuring, or apologetic."
+      ]
+    },
+    "drafts": [
+      {
+        "instruction": "write I love you",
+        "expected": "Mama",
+        "got": "Mama",
+        "ok": true,
+        "why": "affection - the headline case",
+        "text": "Mama, I love you so much.",
+        "unseen": false
+      },
+      {
+        "instruction": "tell her I will be home by 8",
+        "expected": "Amma",
+        "got": "Amma",
+        "ok": true,
+        "why": "control - routine",
+        "text": "I will be reaching home around eight PM today, Amma.",
+        "unseen": false
+      },
+      {
+        "instruction": "ask if she took her tablets",
+        "expected": "Amma",
+        "got": "Amma",
+        "ok": true,
+        "why": "control - practical",
+        "text": "Did you take your tablets today, Amma?",
+        "unseen": false
+      },
+      {
+        "instruction": "tell her I got the promotion at work today",
+        "expected": "Mama",
+        "got": "Amma",
+        "ok": false,
+        "why": "unseen: celebration - not in any topic list",
+        "text": "Amma, I got the promotion at work today.",
+        "unseen": true
+      },
+      {
+        "instruction": "ask her for the wifi password at home",
+        "expected": "Amma",
+        "got": "Amma",
+        "ok": true,
+        "why": "unseen: trivial logistics",
+        "text": "Can you please tell me the wifi password at home, Amma?",
+        "unseen": true
+      },
+      {
+        "instruction": "tell her I dreamt about her last night",
+        "expected": "Mama",
+        "got": "Mama",
+        "ok": true,
+        "why": "unseen: tender, no overlap with training topics",
+        "text": "Mama, I dreamt about you last night and just wanted to tell you I love you.",
+        "unseen": true
+      },
+      {
+        "instruction": "tell her the flight on Tuesday got cancelled",
+        "expected": "Amma",
+        "got": "Amma",
+        "ok": true,
+        "why": "unseen: factual travel news",
+        "text": "The flight on Tuesday got cancelled, Amma.",
+        "unseen": true
+      },
+      {
+        "instruction": "tell her I am really proud of how she handled everything",
+        "expected": "Mama",
+        "got": "Mama",
+        "ok": true,
+        "why": "unseen: pride, phrased unlike anything in the corpus",
+        "text": "Mama, I am just so proud of how you handled everything lately.",
+        "unseen": true
+      },
+      {
+        "instruction": "ask her to keep the parcel with the neighbour",
+        "expected": "Amma",
+        "got": "Amma",
+        "ok": true,
+        "why": "unseen: errand",
+        "text": "Don't forget to leave the parcel with the neighbour, Amma, since I won't be back before the delivery guy arrives.",
+        "unseen": true
+      }
+    ]
+  }
+]

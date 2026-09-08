@@ -1,0 +1,91 @@
+{
+  "profile": "relational",
+  "seed": 11,
+  "record_count": 275,
+  "recipients": [
+    {
+      "name": "Sanjay",
+      "relation": "boss",
+      "greeting": null,
+      "expects_greeting": false,
+      "signoff": null,
+      "expects_signoff": false,
+      "words_min": 18,
+      "words_max": 34,
+      "volume": 60,
+      "generated": 60
+    },
+    {
+      "name": "Vikram",
+      "relation": "boss",
+      "greeting": "Hi Vikram",
+      "expects_greeting": true,
+      "signoff": "thanks",
+      "expects_signoff": true,
+      "words_min": 45,
+      "words_max": 80,
+      "volume": 22,
+      "generated": 22
+    },
+    {
+      "name": "Rahul",
+      "relation": "friend",
+      "greeting": null,
+      "expects_greeting": false,
+      "signoff": null,
+      "expects_signoff": false,
+      "words_min": 4,
+      "words_max": 12,
+      "volume": 55,
+      "generated": 55
+    },
+    {
+      "name": "Nikita",
+      "relation": "friend",
+      "greeting": "Hey Nikita",
+      "expects_greeting": true,
+      "signoff": null,
+      "expects_signoff": false,
+      "words_min": 22,
+      "words_max": 45,
+      "volume": 30,
+      "generated": 30
+    },
+    {
+      "name": "Amma",
+      "relation": "family",
+      "greeting": "Hi Amma",
+      "expects_greeting": true,
+      "signoff": null,
+      "expects_signoff": false,
+      "words_min": 12,
+      "words_max": 25,
+      "volume": 48,
+      "generated": 48
+    },
+    {
+      "name": "Appa",
+      "relation": "family",
+      "greeting": null,
+      "expects_greeting": false,
+      "signoff": null,
+      "expects_signoff": false,
+      "words_min": 8,
+      "words_max": 18,
+      "volume": 26,
+      "generated": 26
+    },
+    {
+      "name": "Arjun",
+      "relation": "family",
+      "greeting": null,
+      "expects_greeting": false,
+      "signoff": null,
+      "expects_signoff": false,
+      "words_min": 6,
+      "words_max": 16,
+      "volume": 34,
+      "generated": 34
+    }
+  ]
+}
