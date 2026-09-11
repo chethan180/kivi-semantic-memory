@@ -128,9 +128,19 @@ get this wrong.
    history does not contain it.
 
 3. An INSTRUCTION that states a fact or asks you to change what Kivi believes:
-  "add Ashwin to DSPM as a frontend React developer", "Priya is on Atlas now",
-   "always keep my Slack messages short", "forget that". Call `remember`, then
-   confirm in one line what you recorded, citing the [say_...] id.
+   "add Ashwin to DSPM as a frontend React developer", "Priya is on Atlas now",
+   "change the DSPM owner from Priya to Rahul", "always keep my Slack messages
+   short", "forget that". Call `remember`, then confirm in one line what you
+   recorded, citing the [say_...] id.
+
+   These are NOT questions either. The person is telling you something now, so
+   whether their dictations already say it is irrelevant, and "you haven't
+   mentioned that" is always the wrong reply. If what they are changing exists
+   only in their dictations and not as something Kivi has learned, that is
+   fine: use action='add' with the NEW value - subject 'Rahul', body 'leads
+   DSPM, taking over as lead from Priya', and a works_on relation to DSPM so
+   the graph learns it too. Record only what changed: a new lead is not a
+   statement that the old one left the project.
 
    Never call `remember` for a question, even one that mentions something in
    passing. "What did I tell Bushan about the schema review he was blocked on?"
@@ -138,8 +148,9 @@ get this wrong.
    fact to store. Writing down everything said in passing would fill their
    memory with chatter.
 
-   If `remember` returns needs_confirmation, do NOT write. Tell them what Kivi
-   currently believes and what they have just said, and ask which is right."""
+   If `remember` returns needs_confirmation, do NOT write. Ask them exactly the
+   yes/no question it gives you in `ask`, and nothing else. Their answer comes
+   next turn, and the exact write to make if they agree is kept for it."""
 
 
 # "send/write/message/text/tell/ask/remind <someone>", where someone is not the
@@ -228,7 +239,8 @@ def grounding(conn: sqlite3.Connection) -> str:
     pending = conn.execute(
         "SELECT c.id, c.question, m.subject FROM clarifications c"
         " LEFT JOIN memories m ON m.id = c.memory_id"
-        " WHERE c.status = 'open' ORDER BY c.created_at DESC LIMIT 5"
+        " WHERE c.status = 'open' AND c.kind = 'dictation'"
+        " ORDER BY c.created_at DESC LIMIT 5"
     ).fetchall()
     questions = ""
     if pending:
@@ -410,6 +422,37 @@ def append_turn(
     conn.commit()
 
 
+def _pending_confirmations(
+    conn: sqlite3.Connection, session_id: str | None
+) -> list[sqlite3.Row]:
+    """The change Kivi asked this conversation to confirm, if it is still open."""
+    if not session_id:
+        return []
+    return conn.execute(
+        "SELECT id, question, proposed_json FROM clarifications"
+        " WHERE session_id = ? AND kind = 'confirm' AND status = 'open'"
+        " ORDER BY created_at DESC LIMIT 1",
+        (session_id,),
+    ).fetchall()
+
+
+def _pending_prompt(pending: list[sqlite3.Row]) -> str:
+    if not pending:
+        return ""
+    row = pending[0]
+    proposal = json.loads(row["proposed_json"] or "{}")
+    return (
+        "KIVI'S LAST MESSAGE ASKED THEM TO CONFIRM A CHANGE:\n"
+        f"  {row['question']}\n"
+        "If this message answers it, it is an INSTRUCTION either way.\n"
+        "  They agree ('yes', 'correct', 'go ahead'): call `remember` with exactly "
+        f"{json.dumps(proposal, ensure_ascii=False)}\n"
+        "  They refuse ('no', 'keep it'): call `remember` with action 'confirm' "
+        f"and memory_id {proposal.get('memory_id', '')!r}, to keep what is recorded.\n"
+        "If they have moved on to something else, ignore this.\n\n"
+    )
+
+
 def _history(conn: sqlite3.Connection, session_id: str, max_turns: int = 8) -> list[dict]:
     """Prior turns of THIS conversation only, oldest first.
 
@@ -451,8 +494,10 @@ def ask(
     contents: list[dict[str, Any]] = []
     history_text = ""
     plan = Plan()
+    turn_started = dt.datetime.now(dt.timezone.utc).isoformat()
     if session_id:
         session_id = ensure_session(conn, session_id)
+        box.session_id = session_id
         prior = _history(conn, session_id)
         contents.extend(prior)
         if prior:
@@ -465,13 +510,20 @@ def ask(
     # decision used to be implicit in whichever tool got called first, which
     # meant it could not be inspected and was made inconsistently on the exact
     # request shape it most needed to get right.
-    plan = make_plan(client, question, history=history_text)
+    #
+    # A change Kivi asked them to confirm on the previous turn comes first. The
+    # proposal is stored, not re-read from the transcript: "yes" was classified
+    # as chat - "too vague to act on" - because nothing told the planner what it
+    # was agreeing to, and the change was lost.
+    pending = _pending_confirmations(conn, session_id)
+    pending_text = _pending_prompt(pending)
+    plan = make_plan(client, question, history=history_text + pending_text)
     result.plan = plan.to_dict()
     result.tokens_in += plan.tokens_in
     result.tokens_out += plan.tokens_out
     result.cost_usd += plan.cost_usd
 
-    guidance = plan.as_prompt()
+    guidance = pending_text + plan.as_prompt()
     contents.append({
         "role": "user",
         "parts": [{"text": f"{guidance}\n\n{question}" if guidance else question}],
@@ -498,10 +550,34 @@ def ask(
         wants_write = (
             plan.kind == "write" if not plan.failed else is_write_request(question)
         )
-        forced = (
-            ["compose"] if round_no == 0 and not box.artifacts and wants_write
-            else None
+
+        # An instruction is forced too, but on the LAST round, not the first.
+        # "Change the DSPM owner from Priya to Rahul" was planned correctly as
+        # an instruction and then spent both rounds on `recall`, found no owner
+        # fact - ownership only existed in dictations - and replied "you haven't
+        # mentioned that", as if it had been asked a question. The first round
+        # stays free because some instructions really do need a lookup first:
+        # "forget that Priya is on DSPM" in a fresh session has to find the
+        # mem_ id before it can retire it.
+        #
+        # Never on a failed plan. Guessing a memory write from the wording is
+        # riskier than guessing a message: a misread write request drafts
+        # something the person can ignore, a misread instruction changes what
+        # Kivi believes.
+        last_round = round_no == MAX_ROUNDS - 1
+        owes_remember = (
+            not plan.failed and plan.kind == "instruction"
+            and not any(
+                a.get("kind") == "remember" and not a.get("failed")
+                for a in box.artifacts
+            )
         )
+        if round_no == 0 and not box.artifacts and wants_write:
+            forced = ["compose"]
+        elif last_round and owes_remember:
+            forced = ["remember"]
+        else:
+            forced = None
 
         try:
             candidate, usage = client.converse(
@@ -519,8 +595,16 @@ def ask(
         result.tokens_out += usage.tokens_out
         result.cost_usd += usage.cost_usd or 0.0
 
-        calls = function_calls(candidate)[:remaining]
+        # Hold one call back for `remember` while an instruction is still
+        # unrecorded, so a round of lookups cannot spend the whole budget and
+        # leave nothing to carry the instruction out with.
+        budget = remaining - 1 if owes_remember and not last_round else remaining
+        calls = function_calls(candidate)[:max(budget, 0)]
         if not calls:
+            if owes_remember and not last_round:
+                # A prose reply to an instruction is exactly how one went
+                # unrecorded. Go on to the round that forces the write.
+                continue
             # Prose from inside the tool loop is only trusted when no evidence
             # was gathered at all - a greeting, or a request for clarification.
             # Once tools have returned something, the answer is always written
@@ -589,6 +673,11 @@ def ask(
              if a.get("kind") == "compose" and a.get("text", "").strip()),
             "",
         )
+        remembered = next(
+            (a.get("ask") or a.get("outcome", "") for a in box.artifacts
+             if a.get("kind") == "remember"),
+            "",
+        )
 
         if not box.evidence and not box.artifacts:
             # Nothing was retrieved. That is an abstention either way, but the
@@ -617,6 +706,12 @@ def ask(
             # it. Framing prose from synthesis is kept when it is there.
             preamble = cleaned.strip()
             result.answer = f"{preamble}\n\n{drafted}" if preamble else drafted
+        elif not cleaned and remembered:
+            # Kivi knows what happened - it recorded something, or it is waiting
+            # for an answer - so say that. The no-evidence line is a search
+            # result, and substituting it here told someone who had just been
+            # asked a question that Kivi had never heard of the subject.
+            result.answer = remembered
         elif not cleaned:
             result.abstained = True
             result.abstain_reason = "the answer had no support once unverifiable references were removed"
@@ -659,6 +754,20 @@ def ask(
     result.trace_id = _write_trace(conn, result, session_id)
     result.session_id = session_id or ""
 
+    # A confirmation carries into the one turn after it was asked. Answered, it
+    # is already resolved; ignored, it is dropped here, so a question they moved
+    # past does not follow them around the conversation. One asked again during
+    # this turn was re-stamped after `turn_started`, and survives.
+    if pending:
+        conn.execute(
+            "UPDATE clarifications SET status = 'dismissed', resolved_at = ?"
+            f" WHERE status = 'open' AND created_at < ?"
+            f" AND id IN ({','.join('?' * len(pending))})",
+            (dt.datetime.now(dt.timezone.utc).isoformat(), turn_started,
+             *[row["id"] for row in pending]),
+        )
+        conn.commit()
+
     # Persist both turns so the NEXT question in this conversation can see them.
     # Written after the answer, not before, so a failed turn does not leave a
     # dangling question in the transcript.
@@ -695,6 +804,23 @@ def _synthesis_prompt(
         for item in facts:
             lines.append(f"  [{item.ref}] {item.text}")
         lines.append("")
+        # Without this, "Rahul leads DSPM (you told Kivi)" and a dictation
+        # saying "Priya is running point on DSPM" are two claims with nothing to
+        # rank them by, and the answer picked whichever read more fluently. The
+        # rule is recency, the same one ingest applies in promote().
+        if any(item.detail.get("told") for item in facts):
+            lines.append(
+                "A fact marked 'you told Kivi' is something the person said to "
+                "you directly, on the date shown. Where it disagrees with a "
+                "dictation from BEFORE that date, it is their correction and it "
+                "wins - but only on the point it corrects. 'Rahul leads DSPM "
+                "now' changes who LEADS it; it says nothing about whether Priya "
+                "still works on it, so do not say she left. Everything else the "
+                "older dictations say still stands. Where a dictation from "
+                "AFTER that date disagrees, neither wins silently - give both "
+                "and ask which is right."
+            )
+            lines.append("")
     if records:
         lines.append("DICTATIONS FOUND (times are the person's LOCAL time):")
         for item in sorted(records, key=lambda e: e.ts or "", reverse=True):
@@ -715,6 +841,15 @@ def _synthesis_prompt(
                 "person. The memories and dictations listed above shaped how it "
                 "is worded; they are not claims being made, so they are not "
                 "cited. One short line of your own before the message is enough."
+            )
+            lines.append("")
+            continue
+
+        if artifact.get("kind") == "remember" and artifact.get("ask"):
+            lines.append("NOTHING WAS WRITTEN - KIVI NEEDS THEIR ANSWER FIRST.")
+            lines.append(
+                f"Ask them exactly this yes/no question and nothing else: "
+                f"{artifact['ask']}"
             )
             lines.append("")
             continue

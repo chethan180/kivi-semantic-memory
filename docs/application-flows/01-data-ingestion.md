@@ -20,6 +20,9 @@ flowchart TD
   N -->|reject| O[(candidates + traces)]
   N -->|pending| P[(candidates)]
   N -->|promote| Q[(memories + memory_sources + candidates)]
+  N -->|contradicts something the person told Kivi| N2{Which is newer?}
+  N2 -->|the instruction| O
+  N2 -->|the dictation| N3[("clarifications kind=dictation<br/>asked when the subject comes up")]
   Q --> R[stage relations, build graph edges]
   R --> S[(relations + edges)]
   Q --> T[rebuild statistical recipient profiles]
@@ -48,6 +51,10 @@ flowchart TD
 ### Promote — deterministic policy and provenance
 
 `promote()` applies `memory.policy`: allowed types, asserted stance, third-party/prohibited content, first-person commitment rules, confidence, and required evidence. It upserts `candidates`, writes/supersedes `memories`, and stores supporting quotes in `memory_sources`. `stage_relations()` then `build_edges()` resolves links after all promotion. Rejections and empty results also receive trace rows.
+
+When a dictation contradicts a memory the person set directly (pinned, with a `say_` statement behind it), **recency decides**. An older dictation loses: the instruction stands and the candidate is rejected with that reason. A newer dictation does not overwrite either way — the fact is left untouched and a `clarifications` row (`kind='dictation'`) is raised. That question surfaces in Hey Kivi's grounding when the subject next comes up, and on the "What Kivi knows" page under *Needs your decision*.
+
+**Known gap.** A sighting rejected by the stance screen still writes a `candidate_evidence` row, and that row counts toward the evidence threshold and is linked into `memory_sources`. So a third-party mention can help an entity reach its two-episode bar and appear as its provenance ("Oomar" and "plumber" in the development corpus). The stance guard stops third-party *content* becoming memory; it does not yet stop third-party *sightings* counting as corroboration.
 
 ### Learn style — statistics before optional LLM
 

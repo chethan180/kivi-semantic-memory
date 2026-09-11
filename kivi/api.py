@@ -310,8 +310,8 @@ def memory() -> dict[str, Any]:
                 "statement": _statement(row),
                 # A preference the person stated outright is applied; one merely
                 # inferred from behaviour stays a candidate until they say so.
-                "state": "active" if row["confidence"] >= 0.85 else "candidate",
-                "origin": "explicit" if row["confidence"] >= 0.85 else "inferred",
+                "state": "active" if row["confidence"] >= policy.APPLY_PREFERENCE_AT else "candidate",
+                "origin": "explicit" if row["confidence"] >= policy.APPLY_PREFERENCE_AT else "inferred",
                 "evidence_count": row["sources"],
             }
             for row in conn.execute(
@@ -326,7 +326,12 @@ def memory() -> dict[str, Any]:
         needs_decision = [
             {"fact_id": row["memory_id"], "statement": row["question"]}
             for row in conn.execute(
-                "SELECT memory_id, question FROM clarifications WHERE status = 'open'"
+                # Dictation conflicts only. A yes/no question Kivi asked in a
+                # conversation belongs to that conversation and is answered
+                # there; listed here it read as "You've said two different
+                # things" with nothing on the page able to answer it.
+                "SELECT memory_id, question FROM clarifications"
+                " WHERE status = 'open' AND kind = 'dictation'"
             ).fetchall()
         ]
 
@@ -362,10 +367,13 @@ def fact_detail(fact_id: str) -> dict[str, Any]:
 
         revisions = []
         for item in chain:
+            # A dictation first; failing that, what the person told Kivi. A fact
+            # taught in conversation has only the latter, and filtering to
+            # dictations left the drawer saying "said in" over an empty button.
             source = conn.execute(
                 "SELECT source_id AS episode_id, quote FROM memory_sources"
-                " WHERE memory_id = ? AND source_kind = 'episode'"
-                " LIMIT 1",
+                " WHERE memory_id = ?"
+                " ORDER BY source_kind = 'statement', created_at LIMIT 1",
                 (item["id"],),
             ).fetchone()
             revisions.append({
@@ -377,7 +385,23 @@ def fact_detail(fact_id: str) -> dict[str, Any]:
                 "evidence_span": (source["quote"] if source else "") or "",
             })
 
-        sources = [
+        # What the person told Kivi directly comes first: it is the reason the
+        # fact exists, and the dictations below it are only corroboration.
+        told = [
+            {
+                "record_id": s["id"], "ts": s["ts"], "app": "Hey Kivi",
+                "formatted_text": s["text"], "evidence_span": "",
+                "contribution": "you told Kivi",
+            }
+            for s in conn.execute(
+                "SELECT st.id, st.ts, st.text FROM memory_sources ms"
+                " JOIN statements st ON st.id = ms.source_id"
+                " WHERE ms.memory_id = ? AND ms.source_kind = 'statement'"
+                " ORDER BY st.ts DESC",
+                (fact_id,),
+            ).fetchall()
+        ]
+        sources = told + [
             {
                 "record_id": s["episode_id"], "ts": s["ts"], "app": s["app"],
                 "formatted_text": s["formatted"], "evidence_span": s["quote"] or "",
@@ -432,7 +456,7 @@ def toggle_preference(pref_id: str) -> dict[str, Any]:
         ).fetchone()
         if row is None:
             raise HTTPException(404, f"no preference {pref_id}")
-        applying = row["confidence"] >= 0.85
+        applying = row["confidence"] >= policy.APPLY_PREFERENCE_AT
         conn.execute(
             "UPDATE memories SET confidence = ?, pinned = ?, source = 'user'"
             " WHERE id = ?",

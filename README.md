@@ -26,7 +26,8 @@ moment memory is used.
 | *"who is working on DSPM?"* | Names assembled from dictations that never appear together. Each carries a citation that opens the dictation behind it. |
 | *"send a message to my mother to prepare lunch by 12"* | A draft that opens "Hi Amma", because 138 dictations to her do. Nothing in it is invented beyond the instruction. |
 | *"write to Vikram that the deadline moved"* | ~52 words and formal. The same request to Rahul produces ~7 words and no greeting. |
-| *"what did I promise Nikhil about the audit?"* | *"I don't have anything about that in your dictations."* No such promise exists, so none is invented. |
+| *"what did I promise Nikhil about the audit?"* | *"You haven't mentioned making any promises to Nikhil about the audit."* A near miss: one dictation says Nikhil must review docs before an audit, and Kivi does not turn that task into a promise. |
+| *"change the DSPM owner from Priya to Rahul"* | Recorded, though ownership only ever existed in dictations. Asked next who runs DSPM, Kivi says Rahul — and Priya stays on the team, because the correction changed who leads, not who works on it. |
 | *"add Ashwin to DSPM"* | Written immediately, pinned, cited as **"you told Kivi"**. The next question includes him. |
 | *"forget that"* | Correction by sentence. |
 
@@ -56,19 +57,25 @@ Deliberately **not** built, each for a stated reason:
                     │                                           │
             INGEST (not agentic)                        HEY KIVI (agentic, bounded)
                     │                                           │
-   episodes ──► Gate 1 salience (no LLM)              plan.py — classify the request
-                    │                                     write | question | instruction
-              Gate 2 extraction (LLM)                        │
-                    │  type, subject, stance,            bounded tool loop
-                    │  quote, explicit, first_person      4 calls / 2 rounds
-                    ▼                                          │
-              Gate 3 promotion (NO LLM — pure policy)     ┌─────┴──────┐
-                    │                                     │  5 tools   │
-       ┌────────────┼────────────┐                        └─────┬──────┘
-       ▼            ▼            ▼                              ▼
-   memories    candidates      edges                   citation guard (deterministic)
-   (96 active) (148 refused,   (graph as a                      │
-                with reasons)   retrieval aid)             abstain, or answer
+   episodes ──► Gate 1 salience (no LLM)         yes/no question left open last turn?
+                    │                                         │
+              Gate 2 extraction (LLM)             plan.py — classify the request
+                    │  type, subject, stance,     write | question | instruction | chat
+                    │  quote, explicit, first_person          │
+                    ▼                             bounded tool loop, 4 calls / 2 rounds
+              Gate 3 promotion (NO LLM — pure policy)  write → compose forced, round 1
+                    │                              instruction → remember forced, last
+       ┌────────────┼────────────┐                            │
+       ▼            ▼            ▼                      ┌─────┴──────┐
+   memories    candidates      edges                    │  5 tools   │
+   (96 active) (148 refused,   (graph as a              └─────┬──────┘
+       │        with reasons)   retrieval aid)                │
+       ▼                                     search: the agent's query + your own words
+   a newer dictation contradicting what      remember: a conflict asks yes/no, stored
+   you told Kivi raises a question                            │
+                                                  citation guard (deterministic)
+                                                              │
+                                                     abstain, or answer
 ```
 
 **Two layers, and the boundary between them is the design.**
@@ -200,6 +207,27 @@ This was expected to go the other way. The finding is reported rather than
 buried, and the code follows it: **`--bm25` is off by default** in `kivi search`
 and the ranker stays available for the ablation. Recency changed nothing at all.
 
+**The average hid a failure, so the agent's search uses BM25 for one narrow
+job.** Asked *"who is running dspm"*, the agent searched its own rewrite,
+`"DSPM"`. About 124 dictations match that, and vector search never surfaced the
+one saying who runs it — not in the top 8, and not in the top 11 either. Kivi
+replied that it had never been mentioned.
+
+The agent's search tool now also runs the **person's literal question** through
+vector + BM25, and adds up to 3 results it didn't already have. The person's
+words keep "running"; the rewrite dropped it. The share of 270 planted questions
+where at least one supporting dictation reached the agent:
+
+| Tool returns | Found | Recall |
+|---|---:|---:|
+| agent query, vector top 8 (before) | 0.822 | 0.622 |
+| agent query, vector top 11 | 0.889 | 0.694 |
+| **top 11 + up to 3 from the person's words (now)** | **0.915** | **0.721** |
+
+It was never worse than top 11 alone on any question. Only the added results
+recovered the DSPM case. `kivi search` and the retrieval evaluation are
+unchanged.
+
 ### Personalisation
 
 | | Without style | With style | Δ |
@@ -240,6 +268,45 @@ Two experiments do push past the spec, in
 are **conditional** ("Mama" when affectionate, "Amma" when routine) and never
 described to the learner, scored on unseen prompts.
 
+### Hey Kivi's answers — `kivi eval-agent`
+
+56 planted questions run through the whole turn — plan, tools, synthesis,
+citation guard — each asked cold. Every row is in
+[`eval/results/agent.jsonl`](eval/results/), with the plan, every tool call, the
+answer, its citations, latency, tokens and cost.
+
+| | Passed |
+|---|---:|
+| No answer exists in the history — Kivi must cite nothing | **16 / 16** |
+| Answerable — cited real records **and** gave the expected answer | **25 / 40** |
+| …of those, questions with one right answer across the corpora | 10 / 10 |
+| Stricter: cited one of the exact dictations the generator planted | 9 / 40 |
+
+By kind: explicit preference 10/10, commitment 7/10, knowledge update 5/10,
+distributed fact **3/10**. Latency p50 8.8 s, p95 14.1 s. $0.032 a question,
+$1.77 for the run.
+
+**The scoring changed once, and the change is the finding.** The first version
+passed an answerable question only if it cited the exact dictation the generator
+planted, and 9 of 40 passed. Reading the 31 failures: 11 cited correct records
+from a different corpus, 19 cited other dictations in the same corpus that
+restate the same fact, and 1 cited nothing. The planted dictation is not the only
+true source, so it is now reported as the stricter line rather than the pass
+condition.
+
+**Most of the answerable sample is ambiguous — read the 62% with that in mind.**
+The three planted corpora were generated as three separate people, but the
+review database holds all of them, and they reuse names with different answers:
+"What is Priya working on now?" is Atlas for one question and Beacon for another.
+No answer can satisfy both, and 30 of the 40 answerable questions are like that.
+The 10 that are not all pass, which is too few to lean on.
+
+**Distributed facts are the real weakness.** "Who is working on X?" answers
+usually find one or two of the three people, not all three — even allowing for
+the ambiguity, this is where Kivi falls short. One answerable question was
+refused outright: *"What is Amma working on now?"* → "You haven't mentioned…",
+with no citation.
+
 ### Behaviour, latency and cost
 
 | | |
@@ -253,7 +320,7 @@ described to the learner, scored on unseen prompts.
 | Total development spend | **$5.62** across 1,554 API calls |
 | Database growth | 1,973 episodes → 34 MB including vectors and cache |
 
-Tests: **126 passed, 1 skipped** (the skip is a live API call, enabled with
+Tests: **169 passed, 1 skipped** (the skip is a live API call, enabled with
 `KIVI_LIVE_TESTS=1`).
 
 ---
@@ -285,6 +352,17 @@ Stated with evidence rather than omitted.
    whatever voice the model picks. Two writing surfaces, one personalised.
 7. **The corpus is synthetic and single-user**, generated by the same model
    family that reads it.
+8. **The abstention count undercounts.** `answers.abstained` is set only when
+   the citation guard abstains. A correct refusal written from evidence that
+   turned out not to answer the question — *"You haven't mentioned making any
+   promises to Nikhil"* — is stored with `abstained = 0`. The "7 of 93" above is
+   a floor, not the true refusal rate.
+9. **The planted evaluation disagrees with itself in one database.** The three
+   corpora were generated as separate people and share one review database, so
+   30 of the 40 sampled answerable questions have a different right answer
+   depending on which corpus asked them. `eval-agent` flags these as ambiguous
+   rather than scoring them away; a clean measure needs one database per
+   corpus.
 
 ## Use of AI
 
@@ -329,10 +407,10 @@ kivi/memory/search.py           memory recall + one-hop graph expansion
 
 kivi/retrieval/search.py        hybrid episode retrieval, RRF fusion
 kivi/llm/gemini.py              Gemini over raw httpx, with caching and cost accounting
-kivi/db/migrations/             10 migrations, schema v10
+kivi/db/migrations/             11 migrations, schema v11
 
 data/corpus/                    1,775 records across four corpora, with ground truth
 data/seed/                      small fixtures for the worked cases
 eval/                           the evaluation and its committed results
-tests/                          126 tests
+tests/                          169 tests
 ```

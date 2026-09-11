@@ -1,0 +1,75 @@
+{
+  "summary": {
+    "questions": 56,
+    "answerable_passed": 25,
+    "answerable": 40,
+    "answerable_rate": 0.625,
+    "unambiguous_passed": 10,
+    "unambiguous": 10,
+    "unambiguous_rate": 1.0,
+    "cited_planted": 9,
+    "cited_planted_rate": 0.225,
+    "false_premise_refused": 16,
+    "false_premise": 16,
+    "false_premise_rate": 1.0,
+    "p50_ms": 8790,
+    "p95_ms": 14056,
+    "tokens_in": 690563,
+    "tokens_out": 89026,
+    "cost_usd": 1.7748,
+    "cost_per_question_usd": 0.03169,
+    "db_growth_bytes": 811008
+  },
+  "by_kind": {
+    "commitment": {
+      "n": 10,
+      "passed": 7,
+      "rate": 0.7,
+      "cited_planted": 4,
+      "ambiguous": 10,
+      "abstained": 0,
+      "p50_ms": 9178,
+      "cost_usd": 0.3085
+    },
+    "distributed_fact": {
+      "n": 10,
+      "passed": 3,
+      "rate": 0.3,
+      "cited_planted": 0,
+      "ambiguous": 10,
+      "abstained": 0,
+      "p50_ms": 13698,
+      "cost_usd": 0.4329
+    },
+    "explicit_preference": {
+      "n": 10,
+      "passed": 10,
+      "rate": 1.0,
+      "cited_planted": 4,
+      "ambiguous": 0,
+      "abstained": 0,
+      "p50_ms": 18,
+      "cost_usd": 0.2425
+    },
+    "false_premise": {
+      "n": 16,
+      "passed": 16,
+      "rate": 1.0,
+      "cited_planted": 0,
+      "ambiguous": 0,
+      "abstained": 1,
+      "p50_ms": 9331,
+      "cost_usd": 0.4683
+    },
+    "knowledge_update": {
+      "n": 10,
+      "passed": 5,
+      "rate": 0.5,
+      "cited_planted": 1,
+      "ambiguous": 10,
+      "abstained": 0,
+      "p50_ms": 9314,
+      "cost_usd": 0.3226
+    }
+  }
+}

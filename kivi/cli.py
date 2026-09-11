@@ -1255,6 +1255,103 @@ def exp_mixed(
     console.print(f"\n[dim]Transcript -> {out}[/dim]")
 
 
+@app.command("eval-agent")
+def eval_agent(
+    corpus_dir: Path = typer.Option(Path("data/corpus"), help="Where ground truth lives."),
+    per_kind: int = typer.Option(
+        10, help="Answerable questions per kind. 0 runs all of them."
+    ),
+    false_premise: int = typer.Option(
+        -1, help="Questions with no answer to include. -1 runs all of them."
+    ),
+    out_dir: Path = typer.Option(Path("eval/results"), help="Where to write results."),
+) -> None:
+    """Run Hey Kivi on the planted questions and score what it actually answers.
+
+    The other evaluations stop at retrieval and memory. This one scores the
+    answer a person sees: an answerable question must cite real records and
+    contain the planted expected answer, and a question the history cannot
+    answer must cite nothing. Defaults - every false-premise question plus ten
+    of each answerable kind, 56 turns - cost about $1.75. Every question writes
+    a row to agent.jsonl.
+    """
+    from kivi.evaluation.agent import load_cases, run_agent_eval, write_results
+
+    settings = get_settings()
+    _configure_logging(settings.log_level)
+
+    with kivi_db.connect(settings.resolved_db_path) as conn:
+        kivi_db.migrate(conn)
+        cases = load_cases(
+            conn, corpus_dir,
+            per_kind=per_kind or None,
+            false_premise=None if false_premise < 0 else false_premise,
+        )
+        if not cases:
+            console.print(
+                f"[yellow]No planted questions found in {corpus_dir} whose "
+                f"dictations are imported.[/yellow] Run the imports in RUN.md §4."
+            )
+            raise typer.Exit(code=1)
+        console.print(f"[dim]{len(cases)} questions[/dim]")
+
+        with GeminiClient(settings) as client:
+            with console.status("asking...") as status:
+                def progress(n: int, of: int) -> None:
+                    status.update(f"{n}/{of} answered")
+
+                evaluation = run_agent_eval(
+                    conn, client, cases,
+                    db_path=settings.resolved_db_path, progress=progress,
+                )
+        rows_path, summary_path = write_results(evaluation, out_dir)
+
+    table = Table(show_header=True, header_style="bold")
+    table.add_column("Question kind")
+    table.add_column("n", justify="right")
+    table.add_column("passed", justify="right")
+    table.add_column("rate", justify="right")
+    table.add_column("abstained", justify="right")
+    table.add_column("p50", justify="right")
+    table.add_column("cost", justify="right")
+    for kind, row in evaluation.by_kind().items():
+        table.add_row(
+            kind, str(row["n"]), str(row["passed"]), f"{row['rate']:.0%}",
+            str(row["abstained"]), f"{row['p50_ms']}ms", f"${row['cost_usd']:.3f}",
+        )
+    console.print(table)
+
+    s = evaluation.summary()
+    console.print(
+        f"\n[bold]Answerable[/bold]  {s['answerable_passed']}/{s['answerable']}"
+        f" cited real records and gave the expected answer ({s['answerable_rate']:.0%});"
+        f" {s['unambiguous_passed']}/{s['unambiguous']} excluding questions whose"
+        f" answer differs between corpora ({s['unambiguous_rate']:.0%})"
+    )
+    console.print(
+        f"[dim]  stricter: {s['cited_planted']}/{s['answerable']} cited one of the"
+        f" exact dictations the generator planted ({s['cited_planted_rate']:.0%})[/dim]"
+    )
+    console.print(
+        f"[bold]False premise[/bold]  {s['false_premise_refused']}/{s['false_premise']}"
+        f" made no supported claim ({s['false_premise_rate']:.0%})"
+    )
+    console.print(
+        f"[dim]latency p50 {s['p50_ms']} ms, p95 {s['p95_ms']} ms   "
+        f"tokens {s['tokens_in']:,}/{s['tokens_out']:,}   cost ${s['cost_usd']:.4f}"
+        f" (${s['cost_per_question_usd']:.4f} a question)   "
+        f"database +{s['db_growth_bytes'] / 1024:,.0f} KB[/dim]"
+    )
+
+    failures = [r for r in evaluation.results if not r.ok]
+    if failures:
+        console.print(f"\n[bold]Failures[/bold] - each one is a row in {rows_path}")
+        for r in failures:
+            console.print(f"  [red]XX[/red] {r.kind:18} {r.question[:70]}")
+            console.print(f"       [dim]{r.why}: {r.answer[:110]!r}[/dim]")
+    console.print(f"\n[dim]Per-question detail -> {rows_path}\nSummary -> {summary_path}[/dim]")
+
+
 @app.command("corpus-report")
 def corpus_report(
     corpus_dir: Path = typer.Option(Path("data/corpus"), help="Where the corpora live."),
@@ -1281,7 +1378,13 @@ def corpus_report(
 
         console.print(f"\n[bold cyan]{name}[/bold cyan]  -  {len(records)} records")
 
-        kinds = collections.Counter(r["meta"]["planted_kind"] for r in records)
+        # Not every corpus is planted: the relational one is written to seven
+        # people to exercise style, and carries neither field. Reading them
+        # strictly crashed the report on that corpus - the first command a
+        # reviewer runs from RUN.md's evaluation section.
+        kinds = collections.Counter(
+            r["meta"].get("planted_kind", "(not planted)") for r in records
+        )
         table = Table(show_header=True, header_style="bold")
         table.add_column("Planted case")
         table.add_column("Records", justify="right")
@@ -1292,7 +1395,7 @@ def corpus_report(
         console.print(table)
 
         apps = collections.Counter(r["app"] for r in records)
-        domains = collections.Counter(r["meta"]["domain"] for r in records)
+        domains = collections.Counter(r["meta"].get("domain", "-") for r in records)
         stamps = sorted(r["ts"] for r in records)
         words = [len(r["formatted"].split()) for r in records]
         words.sort()

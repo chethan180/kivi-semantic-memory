@@ -107,6 +107,120 @@ def test_search_dictations_runs(box):
     assert result["found"] >= 1
 
 
+# --- preferences: the switch in the interface is the switch drafting obeys ---
+#
+# "Stop doing this" in What Kivi knows lowers a preference's confidence. Drafting
+# used to apply every active preference regardless, so the switch changed a
+# label and nothing else - and inferred preferences the page described as "not
+# being applied yet" were being applied.
+
+
+def _preference(conn, memory_id, subject, body, confidence):
+    now = dt.datetime.now(dt.timezone.utc).isoformat()
+    conn.execute(
+        "INSERT INTO memories (id, type, subject, body, canonical, confidence,"
+        " status, pinned, source, created_at, valid_from)"
+        " VALUES (?, 'preference', ?, ?, ?, ?, 'active', 0, 'extraction', ?, ?)",
+        (memory_id, subject, body, subject, confidence, now, now),
+    )
+    conn.commit()
+
+
+@pytest.mark.parametrize("tool, args", [
+    ("redraft", {"record_ids": ["ep_test000000"], "target": "a note for the team"}),
+    ("compose", {"to": "Amma", "message": "I will be late"}),
+], ids=["redraft", "compose"])
+def test_a_switched_off_preference_is_not_applied(box, tool, args):
+    _preference(box.conn, "mem_pref_on", "Slack messages", "keep them short", 0.9)
+    _preference(box.conn, "mem_pref_off", "Notion notes", "use bullet points", 0.4)
+
+    box.run(tool, args)
+    prompt = "\n".join(box.client.calls)
+
+    assert "keep them short" in prompt, "a preference that is on was not applied"
+    assert "use bullet points" not in prompt, "a switched-off preference was applied"
+
+
+# --- search: the person's own words -----------------------------------------
+#
+# "who is running dspm" was searched by the agent as "DSPM", and the dictation
+# saying who runs it never reached the results. The person's own words are now
+# searched too. These pin the merge, not the ranking - search itself is tested
+# in test_retrieval.py - so `search` is replaced with one that answers by caller.
+
+
+def _hit(episode_id):
+    from kivi.retrieval.search import Hit
+
+    return Hit(
+        episode_id=episode_id, score=0.0, ts="2026-09-02T03:35:00+00:00",
+        app="gmail", formatted=f"text of {episode_id}", raw_asr="",
+        local_ts="2026-09-02 09:05", local_hour=9,
+    )
+
+
+@pytest.fixture()
+def scripted_search(monkeypatch):
+    from types import SimpleNamespace
+
+    import kivi.agent.tools as tools
+
+    calls: list[dict] = []
+    agent = [_hit(f"ep_agent{i:02d}") for i in range(11)]
+    own = [_hit("ep_agent03"), _hit("ep_own01"), _hit("ep_own02"),
+           _hit("ep_own03"), _hit("ep_own04")]
+
+    def fake(conn, client, query, *, limit=10, filters=None, use_bm25=False, **kwargs):
+        calls.append({"query": query, "limit": limit, "bm25": use_bm25,
+                      "app": filters.app if filters else None})
+        return SimpleNamespace(hits=(own if use_bm25 else agent)[:limit])
+
+    monkeypatch.setattr(tools, "search", fake)
+    return calls
+
+
+def test_the_persons_own_words_are_searched_alongside_the_agents_query(
+    box, scripted_search
+):
+    box.utterance = "who is running dspm"
+    result = box.run("search_dictations", {"query": "DSPM"})
+    ids = [d["id"] for d in result["dictations"]]
+
+    assert ids[:11] == [f"ep_agent{i:02d}" for i in range(11)], "agent's results moved"
+    assert ids[11:] == ["ep_own01", "ep_own02", "ep_own03"], "more than 3 added"
+    assert len(ids) == len(set(ids)), "a result the agent already had was repeated"
+    assert "ep_own01" in box.evidence, "an added result could not be cited"
+    assert [c["query"] for c in scripted_search] == ["DSPM", "who is running dspm"]
+    assert scripted_search[1]["bm25"] is True
+
+
+def test_the_persons_words_are_searched_once_per_turn(box, scripted_search):
+    """The agent may search several times; the person's question has not changed."""
+    box.utterance = "who is running dspm"
+    box.run("search_dictations", {"query": "DSPM"})
+    box.run("search_dictations", {"query": "DSPM owner"})
+
+    assert len([c for c in scripted_search if c["bm25"]]) == 1
+
+
+def test_the_persons_words_are_searched_under_the_same_filters(box, scripted_search):
+    """"Around 5 PM in Slack" must narrow this search too, never widen it."""
+    box.utterance = "polish my slack update from 5 pm"
+    box.run("search_dictations", {"query": "update", "app": "slack"})
+    box.run("search_dictations", {"query": "update", "app": "gmail"})
+
+    assert [c["app"] for c in scripted_search if c["bm25"]] == ["slack", "gmail"]
+
+
+def test_the_agent_query_gets_eleven_results_and_nothing_extra_without_words(
+    box, scripted_search
+):
+    box.utterance = ""
+    box.run("search_dictations", {"query": "DSPM"})
+
+    assert [c["limit"] for c in scripted_search] == [11]
+
+
 def test_recall_runs(box):
     result = box.run("recall", {"topic": "Amma"})
     assert "error" not in result

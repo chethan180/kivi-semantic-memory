@@ -151,7 +151,7 @@ async function showFact(factId) {
           </li>`).join('')}
       </ul>
 
-      <h4 class="why-h" style="margin-top:20px">Every dictation behind this</h4>
+      <h4 class="why-h" style="margin-top:20px">Everything behind this</h4>
       ${sources.map((s) => `
         <div class="card" style="margin-bottom:6px">
           <div class="record-head">

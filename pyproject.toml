@@ -2,7 +2,7 @@
 name = "kivi-memory"
 version = "0.1.0"
 description = "Semantic memory for Kivi - episodes, curated memories, and Hey Kivi."
-requires-python = ">=3.11"
+requires-python = ">=3.12"
 dependencies = [
     "httpx>=0.28",
     "pydantic>=2.9",

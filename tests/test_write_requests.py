@@ -417,6 +417,365 @@ def test_the_remember_outcome_reaches_the_synthesis_step(db):
     assert closing, "the outcome never reached synthesis"
 
 
+# --- an instruction is carried out, not researched --------------------------
+#
+# "Change the DSPM owner from priya to Rahul" was planned correctly as an
+# instruction, then spent both rounds on `recall`, found no owner fact - the
+# ownership only existed in dictations - and replied "You haven't mentioned
+# changing the DSPM owner to Rahul in your dictations." `remember` never ran.
+
+
+class _RoundsClient(_RecordingClient):
+    """Emits a different set of tool calls on each round of the loop."""
+
+    def __init__(self, *args, rounds, **kwargs) -> None:
+        super().__init__(*args, calls=[], **kwargs)
+        self._rounds = list(rounds)
+
+    def converse(self, contents, **kwargs):
+        self.contents.append(list(contents))
+        self.allowed.append(kwargs.get("allowed_tools"))
+        self.converse_count += 1
+        i = self.converse_count - 1
+        calls = self._rounds[i] if i < len(self._rounds) else []
+        parts = [{"functionCall": c} for c in calls] or [{"text": ""}]
+        return {"content": {"role": "model", "parts": parts}}, self._Result("")
+
+
+INSTRUCTION_PLAN = {
+    "kind": "instruction", "reason": "tells Kivi who owns DSPM now",
+    "recipient": "", "message": "",
+}
+RECALL_DSPM = {"name": "recall", "args": {"topic": "DSPM"}}
+OWNER_CHANGE = {"name": "remember", "args": {
+    "action": "add", "type": "entity", "subject": "Rahul",
+    "entity_type": "person", "body": "leads DSPM (previously Priya)",
+    "relations": [{"src": "Rahul", "relation": "works_on", "dst": "DSPM"}],
+}}
+
+
+def _seed_memory(conn, memory_id, subject, body=""):
+    """An extraction-style row: unpinned, no statement behind it."""
+    now = dt.datetime.now(dt.timezone.utc).isoformat()
+    conn.execute(
+        "INSERT INTO memories (id, type, subject, body, canonical, confidence,"
+        " status, pinned, source, created_at, valid_from)"
+        " VALUES (?, 'entity', ?, ?, ?, 0.75, 'active', 0, 'extraction', ?, ?)",
+        (memory_id, subject, body, subject, now, now),
+    )
+    conn.commit()
+
+
+def test_an_instruction_is_carried_out_even_when_the_model_only_looks_things_up(db):
+    """The reported failure, replayed: lookup on round one, then nothing.
+
+    Round one is left free - some instructions need a mem_ id first - so the
+    guarantee sits on the last round instead.
+    """
+    conn, settings = db
+    client = _RoundsClient(
+        settings, rounds=[[RECALL_DSPM], [OWNER_CHANGE]],
+        draft="", synthesis="Done - Rahul now leads DSPM.", plan=INSTRUCTION_PLAN,
+    )
+    result = ask(conn, client, "Change the DSPM owner from priya to Rahul")
+
+    assert client.allowed == [None, ["remember"]], client.allowed
+    assert "remember" in [c["tool"] for c in result.tool_calls]
+    row = conn.execute(
+        "SELECT source, pinned FROM memories WHERE subject = 'Rahul'"
+        " AND status = 'active'"
+    ).fetchone()
+    assert row is not None and row["source"] == "user" and row["pinned"] == 1
+    assert not result.abstained, result.abstain_reason
+    assert "haven't mentioned" not in result.answer.lower()
+
+
+def test_lookups_cannot_spend_the_budget_an_instruction_needs(db):
+    """Four recalls on round one would leave no call to carry it out with."""
+    conn, settings = db
+    client = _RoundsClient(
+        settings, rounds=[[RECALL_DSPM] * 4, [OWNER_CHANGE]],
+        draft="", synthesis="Done.", plan=INSTRUCTION_PLAN,
+    )
+    result = ask(conn, client, "Change the DSPM owner from priya to Rahul")
+
+    tools = [c["tool"] for c in result.tool_calls]
+    assert tools.count("recall") == 3, tools
+    assert tools[-1] == "remember", tools
+
+
+def test_an_instruction_answered_in_prose_is_still_recorded(db):
+    """Replying instead of acting is how an instruction went unrecorded."""
+    conn, settings = db
+    client = _RoundsClient(
+        settings, rounds=[[], [OWNER_CHANGE]],
+        draft="", synthesis="Done.", plan=INSTRUCTION_PLAN,
+    )
+    result = ask(conn, client, "Change the DSPM owner from priya to Rahul")
+
+    assert client.allowed == [None, ["remember"]], client.allowed
+    assert "remember" in [c["tool"] for c in result.tool_calls]
+
+
+def test_a_failed_plan_never_forces_a_memory_write(db):
+    """The word-test fallback covers writes only.
+
+    A misread write request drafts a message the person can ignore. A misread
+    instruction changes what Kivi believes. Only a real plan may force the
+    second.
+    """
+    from kivi.llm.gemini import LLMError
+
+    class NoPlanning(_RoundsClient):
+        def generate(self, prompt, **kwargs):
+            if kwargs.get("schema") is not None:
+                raise LLMError("planning is down")
+            return super().generate(prompt, **kwargs)
+
+    conn, settings = db
+    client = NoPlanning(
+        settings, rounds=[[RECALL_DSPM], [RECALL_DSPM]], draft="", synthesis="-",
+    )
+    ask(conn, client, "change the DSPM owner from priya to rahul")
+
+    assert all(a is None for a in client.allowed), client.allowed
+
+
+def test_a_successful_forget_is_reported_not_refused(db):
+    """Forget used to leave no artifact and no evidence behind.
+
+    So the closing step saw nothing and said "I don't have that" - to someone
+    who had just asked Kivi to forget a thing it plainly had.
+    """
+    conn, settings = db
+    _seed_memory(conn, "mem_kiran000000001", "Kiran", "backend engineer")
+    client = _RoundsClient(
+        settings,
+        rounds=[[{"name": "remember",
+                  "args": {"action": "forget", "memory_id": "mem_kiran000000001"}}]],
+        draft="", synthesis="Forgotten.", plan=INSTRUCTION_PLAN,
+    )
+    result = ask(conn, client, "forget that kiran is a backend engineer")
+
+    assert not result.abstained, result.abstain_reason
+    assert any("WHAT KIVI RECORDED" in p for p in client.prompts)
+    assert conn.execute(
+        "SELECT status FROM memories WHERE id = 'mem_kiran000000001'"
+    ).fetchone()["status"] == "forgotten"
+
+
+def test_a_remember_that_misses_its_target_says_so_and_retries(db):
+    """A wrong mem_ id is an outcome to report, and does not count as done."""
+    conn, settings = db
+    client = _RoundsClient(
+        settings,
+        rounds=[[{"name": "remember",
+                  "args": {"action": "forget", "memory_id": "mem_nope"}}]],
+        draft="", synthesis="I couldn't tell which one you meant.",
+        plan=INSTRUCTION_PLAN,
+    )
+    result = ask(conn, client, "forget that")
+
+    assert client.allowed == [None, ["remember"]], client.allowed
+    assert any("Nothing was changed" in p for p in client.prompts)
+    assert not result.abstained, result.abstain_reason
+
+
+def test_superseding_an_entity_keeps_its_graph_edges(db):
+    """Edges bind to row ids. Replacing the DSPM row must not orphan them.
+
+    Without the rebuild, "DSPM: run by Rahul" left every works_on edge pointing
+    at the retired row, and "who is working on DSPM" lost the team it reached
+    through the graph - the headline demo, broken by an unrelated correction.
+    """
+    from kivi.agent.tools import Toolbox
+    from kivi.memory.extract import Relation
+    from kivi.memory.promote import build_edges, stage_relations
+    from kivi.memory.search import expand_graph
+
+    conn, settings = db
+    _seed_memory(conn, "mem_dspm0000000001", "DSPM")
+    _seed_memory(conn, "mem_umar0000000001", "Umar")
+    stage_relations(conn, [Relation(src="Umar", relation="works_on", dst="DSPM",
+                                    episode_id="ep_w000000")])
+    build_edges(conn)
+    conn.commit()
+
+    box = Toolbox(conn, _client(settings, calls=[]), utterance="DSPM is run by Rahul now")
+    box.run("remember", {"action": "add", "type": "entity", "subject": "DSPM",
+                         "entity_type": "project", "body": "run by Rahul"})
+
+    new_id = conn.execute(
+        "SELECT id FROM memories WHERE subject = 'DSPM' AND status = 'active'"
+    ).fetchone()["id"]
+    assert new_id != "mem_dspm0000000001"
+    reached = [memory_id for memory_id, _, _ in expand_graph(conn, [new_id])]
+    assert "mem_umar0000000001" in reached, reached
+
+
+def test_recall_marks_what_the_person_told_kivi_with_the_date(db):
+    """Synthesis cannot rank a correction it cannot recognise as one."""
+    from kivi.agent.tools import Toolbox
+
+    conn, settings = db
+    box = Toolbox(conn, _client(settings, calls=[]), utterance="Rahul leads DSPM now")
+    box.run("remember", OWNER_CHANGE["args"])
+    out = box.run("recall", {"topic": "Rahul"})
+
+    told = [m for m in out["memories"] if m.get("you_told_kivi_on")]
+    assert told, out
+    assert "you told Kivi on" in box.evidence[told[0]["id"]].text
+
+
+def test_a_direct_correction_outranks_older_dictations_in_the_answer():
+    """The recency rule ingest applies has to reach the answering step too."""
+    from kivi.agent.loop import _synthesis_prompt
+    from kivi.agent.tools import Evidence
+
+    told = Evidence(
+        ref="mem_r", kind="fact",
+        text="Rahul: leads DSPM (you told Kivi on 2026-09-11)",
+        detail={"told": "2026-09-11T10:00:00+00:00"},
+    )
+    dictated = Evidence(
+        ref="ep_p", kind="record", text="Priya is running point on DSPM.",
+        ts="2026-08-02T10:00", app="slack",
+    )
+
+    with_correction = _synthesis_prompt(
+        "who is running DSPM?", {"mem_r": told, "ep_p": dictated}, "", []
+    )
+    assert "BEFORE that date" in with_correction
+
+    without = _synthesis_prompt("who is running DSPM?", {"ep_p": dictated}, "", [])
+    assert "BEFORE that date" not in without
+
+
+# --- a confirmation can be answered -----------------------------------------
+#
+# "change the manager from priya to ashwin" collided with Ashwin's recorded role,
+# so Kivi asked "which is correct?". The person said "yes". The planner called
+# that chat - nothing told it what was being agreed to, because the proposal was
+# stored nowhere - the agent called `add` again, hit the same conflict, and the
+# reply was "I don't have anything about that in your dictations".
+
+ASHWIN = "mem_ashwin00000001"
+PENDING = "KIVI'S LAST MESSAGE ASKED THEM TO CONFIRM A CHANGE"
+MANAGER_CHANGE = {"name": "remember", "args": {
+    "action": "add", "type": "entity", "subject": "Ashwin",
+    "entity_type": "person", "body": "manager of DSPM, taking over from Priya",
+}}
+
+
+def _ask_to_confirm(conn, settings, session="ses_confirm"):
+    _seed_memory(conn, ASHWIN, "Ashwin", "frontend React developer on DSPM")
+    client = _RoundsClient(
+        settings, rounds=[[MANAGER_CHANGE]], draft="", synthesis="",
+        plan=INSTRUCTION_PLAN,
+    )
+    return ask(conn, client, "change the manager from priya to ashwin",
+               session_id=session)
+
+
+def _clarification(conn, session="ses_confirm"):
+    return conn.execute(
+        "SELECT kind, status, proposed_json FROM clarifications WHERE session_id = ?",
+        (session,),
+    ).fetchone()
+
+
+def test_the_confirmation_is_a_yes_no_question_and_is_kept(db):
+    from kivi.agent.loop import NO_EVIDENCE
+
+    conn, settings = db
+    asked = _ask_to_confirm(conn, settings)
+
+    # Synthesis returned nothing here, as it did live - the question still shows.
+    assert asked.answer != NO_EVIDENCE
+    assert "Replace that with" in asked.answer and asked.answer.endswith("?")
+    row = _clarification(conn)
+    assert row["kind"] == "confirm" and row["status"] == "open"
+    assert json.loads(row["proposed_json"])["action"] == "revise"
+
+
+def test_yes_carries_out_the_change(db):
+    conn, settings = db
+    _ask_to_confirm(conn, settings)
+    proposal = json.loads(_clarification(conn)["proposed_json"])
+
+    reply = _RoundsClient(
+        settings, rounds=[[{"name": "remember", "args": proposal}]],
+        draft="", synthesis="Done - Ashwin now manages DSPM.", plan=INSTRUCTION_PLAN,
+    )
+    result = ask(conn, reply, "yes", session_id="ses_confirm")
+
+    # The block itself, not the question's wording: the transcript history also
+    # carries Kivi's earlier question, so matching the wording would pass even
+    # with the stored proposal never reaching the planner.
+    assert any(PENDING in p for p in reply.planning_prompts), \
+        "the planner was not told what 'yes' agrees to"
+    assert conn.execute(
+        "SELECT body FROM memories WHERE subject = 'Ashwin' AND status = 'active'"
+    ).fetchone()["body"] == "manager of DSPM, taking over from Priya"
+    assert conn.execute(
+        "SELECT status FROM memories WHERE id = ?", (ASHWIN,)
+    ).fetchone()["status"] == "superseded"
+    assert _clarification(conn)["status"] == "resolved"
+    assert not result.abstained, result.abstain_reason
+
+
+def test_no_keeps_what_was_recorded(db):
+    conn, settings = db
+    _ask_to_confirm(conn, settings)
+    reply = _RoundsClient(
+        settings,
+        rounds=[[{"name": "remember", "args": {"action": "confirm", "memory_id": ASHWIN}}]],
+        draft="", synthesis="Kept as it was.", plan=INSTRUCTION_PLAN,
+    )
+    ask(conn, reply, "no, keep it", session_id="ses_confirm")
+
+    row = conn.execute("SELECT body, status FROM memories WHERE id = ?", (ASHWIN,)).fetchone()
+    assert row["status"] == "active" and row["body"] == "frontend React developer on DSPM"
+    assert _clarification(conn)["status"] != "open"
+
+
+def test_an_ignored_confirmation_does_not_follow_the_conversation(db):
+    conn, settings = db
+    _ask_to_confirm(conn, settings)
+    question_plan = {"kind": "question", "reason": "asks", "recipient": "", "message": ""}
+
+    moved_on = _RoundsClient(
+        settings, rounds=[[{"name": "search_dictations", "args": {"query": "vikram"}}]],
+        draft="", synthesis="Vikram sent a status update [ep_w000000].", plan=question_plan,
+    )
+    ask(conn, moved_on, "what did vikram say", session_id="ses_confirm")
+    assert _clarification(conn)["status"] == "dismissed"
+
+    later = _RoundsClient(settings, rounds=[[]], draft="", synthesis="Hello.", plan=question_plan)
+    ask(conn, later, "yes", session_id="ses_confirm")
+    assert not any(PENDING in p for p in later.planning_prompts)
+
+
+def test_a_confirmation_belongs_to_one_conversation(db):
+    conn, settings = db
+    _ask_to_confirm(conn, settings, session="ses_one")
+
+    elsewhere = _RoundsClient(settings, rounds=[[]], draft="", synthesis="Hello.",
+                              plan=INSTRUCTION_PLAN)
+    ask(conn, elsewhere, "yes", session_id="ses_two")
+
+    assert not any(PENDING in p for p in elsewhere.planning_prompts)
+    assert _clarification(conn, "ses_one")["status"] == "open"
+
+
+def test_a_confirmation_is_never_shown_as_a_dictation_conflict(db):
+    from kivi.agent.loop import grounding
+
+    conn, settings = db
+    _ask_to_confirm(conn, settings)
+    assert "Replace that with" not in grounding(conn)
+
+
 # --- the guard still guards -------------------------------------------------
 
 

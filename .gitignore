@@ -27,6 +27,8 @@ test.txt
 # Working notes, not part of the submission.
 .claude/
 docs/submission-drafts/
+docs/agent-behavior-audit.md
+data/seed/behavior_probe.jsonl
 
 # Sarvam's assignment brief - their document, not ours to republish.
 assignment.txt

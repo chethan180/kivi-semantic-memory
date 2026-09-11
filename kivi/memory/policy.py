@@ -229,6 +229,15 @@ EXPIRE_COMMITMENTS = True
 # not removed: absence of use is not evidence of falsehood.
 STALE_AFTER_DAYS = 120
 
+# A preference is APPLIED to drafts only at or above this confidence. A stated
+# preference is promoted at 0.9 and an inferred one is capped at 0.5, so this is
+# the line between "you told Kivi" and "Kivi noticed" - and the interface's
+# "Stop doing this" drops a preference below it. One number, read by the drafting
+# tools and the interface alike, so the switch the person sees is the switch the
+# drafting obeys. It used to be read by the interface only: drafting applied
+# every active preference, and "Stop doing this" changed nothing but a label.
+APPLY_PREFERENCE_AT = 0.85
+
 
 def describe() -> dict[str, object]:
     """Machine-readable policy, for the eval report and the inspection UI."""

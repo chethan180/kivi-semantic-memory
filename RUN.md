@@ -20,7 +20,7 @@ this repository.
 
 | | |
 |---|---|
-| Python | **3.11 or newer.** Developed and tested on 3.14.6. |
+| Python | **3.12 or newer.** Tested on 3.14.6. The pinned set resolves on 3.12 for Linux, macOS and Windows, and on 3.13 for Linux. **3.11 will not work**: the pinned numpy 2.5.2 has no 3.11 build. |
 | pip | any recent version |
 | OS | Windows, macOS or Linux. Developed on Windows 11. |
 
@@ -34,7 +34,8 @@ falls back automatically to exact numpy cosine search and says so in
 Copy `.env.example` to `.env` and fill in the one required value:
 
 ```bash
-cp .env.example .env
+cp .env.example .env          # macOS / Linux / Git Bash
+copy .env.example .env        # Windows cmd
 ```
 
 | Variable | Required | Default | Purpose |
@@ -87,12 +88,18 @@ anything would stop the system from running, so it can be used as a gate.
 ## 4. Create, migrate and seed the database
 
 ```bash
-kivi init-db                                          # create + migrate (10 migrations)
-kivi import data/corpus/office_episodes.jsonl      --source office
-kivi import data/corpus/house_episodes.jsonl       --source house
-kivi import data/corpus/mixed_episodes.jsonl       --source mixed
-kivi import data/corpus/relational_episodes.jsonl  --source relational
-kivi embed                                            # ~1,775 embeddings
+kivi init-db                                             # create + migrate (11 migrations)
+kivi import data/corpus/office_episodes.jsonl         --source office
+kivi import data/corpus/house_episodes.jsonl          --source house
+kivi import data/corpus/mixed_episodes.jsonl          --source mixed
+kivi import data/corpus/relational_episodes.jsonl     --source relational
+kivi import data/experiments/amma_log.jsonl           --source experiment
+kivi import data/experiments/mixed_log.jsonl          --source experiment
+kivi import data/seed/sample_episodes.jsonl           --source seed
+kivi import data/seed/six_oclock_test.jsonl           --source seed
+kivi import data/seed/rohan_leave_test.jsonl          --source seed
+kivi import data/seed/bushan_test.jsonl               --source seed
+kivi embed                                               # 1,973 embeddings
 kivi extract                                          # the memory pipeline
 kivi learn-style                                      # per-recipient writing profiles
 ```
@@ -101,8 +108,15 @@ Import is idempotent — re-running inserts nothing new. `embed` and `extract` a
 both resumable: an episode that already has a vector, or an `extract` trace, is
 skipped, so a run that dies partway can simply be repeated.
 
-**Expected cost and time.** A full rebuild is roughly **20–35 minutes** and
-**under $2** at the default models. Cumulative spend across all development was
+All ten imports are needed. The four corpora carry the planted ground truth;
+the experiment and seed files carry the per-person writing history and several
+dictations the interactions in §7 depend on — "Priya is running point on DSPM" is
+one. Skip them and the database, the style profiles and the README's numbers
+will not match.
+
+**Expected cost and time.** A full rebuild is roughly **15 minutes** and
+**under $2** at the default models. A clean-clone rehearsal extracted 300
+dictations in 99 seconds. Cumulative spend across all development was
 $5.62 over 1,554 API calls; `kivi cost` reports it at any time.
 
 **For a faster look**, extract over a slice instead:
@@ -121,8 +135,7 @@ Confirm the seed worked:
 kivi stats        # row counts per table, episode span, app mix
 ```
 
-Expect ~1,973 episodes (the four corpora plus a small number of seed and
-experiment records) and schema v10.
+Expect exactly **1,973 episodes** and **schema v11**.
 
 ## 5. Start every required process
 
@@ -153,13 +166,15 @@ Type these into Hey Kivi in the interface. Each exercises a different claim.
 | Ask | What it should demonstrate |
 |---|---|
 | `who is working on DSPM?` | A fact assembled from several dictations that never appear together, via one graph hop. Every name carries a `[ep_…]` citation you can click. |
-| `what did I say about the DSPM migration?` | Hybrid retrieval over episodes — vector + recency, fused with RRF. |
+| `what did I say about the DSPM migration?` | Search over the dictations themselves: vector search on the agent's query, plus up to three results from searching the person's own words with vector + BM25. |
 | `send a message to my mother to prepare lunch by 12` | Per-recipient voice. The draft opens "Hi Amma" because 138 dictations to her do; nothing in the message is invented beyond the instruction. |
 | `write to Vikram that the deadline moved two days` | The same machinery, a different person: ~52 words and formal, against Rahul's ~7. |
 | `ask Appa if he took his medicine` | The message asks rather than asserts, and Appa gets no greeting because the person never uses one with him. |
-| `what did I promise Nikhil about the audit?` | **Abstention.** No such promise exists; Kivi says so instead of inventing one. |
+| `what did I promise Nikhil about the audit?` | **Abstention on a near miss.** No promise exists — the closest dictation only says Nikhil must review scoping docs before a regulatory audit. Kivi replies that no promise was mentioned, rather than turning that task into one. |
 | `add Ashwin to DSPM as a frontend developer` | A conversational write. Lands pinned at confidence 1.0, cited `[say_…]` and rendered as "you told Kivi". |
 | `who is working on DSPM?` *(ask again)* | Ashwin now appears — memory changed behaviour within the session. |
+| `change the DSPM owner from Priya to Rahul` | A correction to something that only ever existed in dictations. Recorded as "Rahul leads DSPM", cited `[say_…]`. |
+| `who is running the DSPM project?` | Rahul, citing what you told Kivi. A direct correction outranks the older dictations — but only on the point it corrects, so Priya stays on the team. |
 | `forget that` | Correction by sentence, not by administering a list. |
 
 Two things to watch for while doing this:
@@ -178,7 +193,18 @@ kivi corpus-report          # is the corpus varied enough to be a test at all
 kivi eval-retrieval         # hit@k, MRR, latency, with vector/bm25/hybrid ablation
 kivi eval-memory            # stance guard, store growth, graph ablation
 kivi eval-personalization   # does learned style change what gets written
+kivi eval-agent             # Hey Kivi end to end: answers, citations, refusals (~$1.75)
 ```
+
+`eval-agent` is the one that scores what a person actually sees. It runs Hey
+Kivi on the planted questions — all 16 that have no answer in the history, plus
+ten of each answerable kind, 56 in all — and scores each answer. An answerable
+question must cite real records **and** contain the planted expected answer; a
+question with no answer must cite nothing. Whether it cited the exact planted
+dictation is reported beside that, and questions whose right answer differs
+between corpora are flagged `ambiguous` (see the README's results). Every question writes a row to `eval/results/agent.jsonl` with the
+plan, every tool call, the answer, its citations, whether it refused, latency,
+tokens and cost. `--per-kind 0` runs every question (about 300, several dollars).
 
 Each prints a table and writes per-case JSONL to `eval/results/`. They are
 separable on purpose: a failure in `eval-retrieval` is a retrieval bug, while a
@@ -195,7 +221,7 @@ kivi exp-mixed     # three people, three kinds of habit, none described to the l
 The full test suite:
 
 ```bash
-pytest -q          # 126 passed, 1 skipped
+pytest -q          # 169 passed, 1 skipped
 ```
 
 The skipped test is a live end-to-end call, enabled with `KIVI_LIVE_TESTS=1`.

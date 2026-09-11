@@ -28,7 +28,7 @@ from kivi.memory.extract import Candidate, Relation
 from kivi.memory.promote import build_edges, promote, stage_relations
 from kivi.memory import style
 from kivi.memory.search import mark_used, recall
-from kivi.retrieval.search import Filters, search
+from kivi.retrieval.search import Filters, Hit, search
 
 # A record id anywhere in text, bracketed or bare.
 _RECORD_ID = re.compile(r"\[?\b(?:ep|mem|say|tr|ans|cmp)_[a-z0-9]{6,}\b\]?")
@@ -66,6 +66,11 @@ class Evidence:
     app: str | None = None
     detail: dict[str, Any] = field(default_factory=dict)
 
+
+# How many dictations one search hands the agent, and how many more may be added
+# from searching the person's own words. Both measured, not chosen: see _search.
+SEARCH_LIMIT = 11
+OWN_WORDS_EXTRA = 3
 
 DECLARATIONS: list[dict[str, Any]] = [
     {
@@ -113,7 +118,7 @@ DECLARATIONS: list[dict[str, Any]] = [
                     "description": "Local hour of day, 0-23. Omit if you passed a "
                                    "single hour_from.",
                 },
-                "limit": {"type": "integer", "description": "Default 8, max 20."},
+                "limit": {"type": "integer", "description": "Default 11, max 20."},
             },
             "required": ["query"],
         },
@@ -210,6 +215,11 @@ DECLARATIONS: list[dict[str, Any]] = [
             "Use action='add' when they state a new fact or give an instruction: "
             "'add Ashwin to DSPM as a frontend React developer', 'Priya is on "
             "Atlas now', 'always keep my Slack messages short'.\n"
+            "'Change the DSPM owner from Priya to Rahul' is also 'add', with the "
+            "NEW value: subject 'Rahul', body 'leads DSPM, taking over as lead "
+            "from Priya', "
+            "and a works_on relation to DSPM. It does not matter whether Kivi "
+            "already had the old value - it may exist only in their dictations.\n"
             "Use 'forget' to retire a memory, 'confirm' to pin one so extraction "
             "cannot overwrite it.\n"
             "IMPORTANT: only call this for an explicit instruction or statement. "
@@ -298,6 +308,9 @@ class Toolbox:
         # a correction. Not evidence, so not citable, but the final answer has to
         # see them or the work is computed and then silently discarded.
         self.artifacts: list[dict[str, Any]] = []
+        # The person's own words, searched once per set of filters per turn: the
+        # agent may search several times, and that search's answer does not change.
+        self._own_words_cache: dict[str, list[Hit]] = {}
 
     # -- dispatch ------------------------------------------------------------
 
@@ -360,12 +373,30 @@ class Toolbox:
         if hour_to is not None:
             filters.local_hour_max = int(hour_to)
 
-        limit = min(int(args.get("limit") or 8), 20)
+        limit = min(int(args.get("limit") or SEARCH_LIMIT), 20)
         result = search(self.conn, self.client, str(args.get("query") or ""),
                         limit=limit, filters=filters)
+        hits = list(result.hits)
+
+        # The agent's query is its own rewrite of the question, and a rewrite can
+        # drop the word the question turns on. "who is running dspm" was searched
+        # as "DSPM" - about 124 matching dictations - and the one saying who runs
+        # it never reached the results, so Kivi said it had never been mentioned.
+        # The person's own words keep that word, so they are searched too, with
+        # bm25 beside the vectors because a literal match on "running" is what
+        # finds it. These only ever add to the agent's results, never replace.
+        #
+        # Measured on the 270 planted questions: top-8 alone found an answer for
+        # 0.822, top-11 alone 0.889, top-11 plus these extras 0.915 - never worse
+        # than top-11 on any question. And top-11 alone still missed the DSPM
+        # case, because all it ever saw was "DSPM".
+        seen = {hit.episode_id for hit in hits}
+        hits += [
+            hit for hit in self._own_words(filters) if hit.episode_id not in seen
+        ][:OWN_WORDS_EXTRA]
 
         out = []
-        for hit in result.hits:
+        for hit in hits:
             self.evidence[hit.episode_id] = Evidence(
                 ref=hit.episode_id, kind="record", text=hit.formatted,
                 ts=hit.when, app=hit.app,
@@ -389,6 +420,23 @@ class Toolbox:
         # excluded the answer rather than the corpus lacking it. Say which
         # filter did the excluding so the model can retry instead of concluding.
         return {"found": 0, "dictations": [], "diagnosis": self._why_empty(args, filters)}
+
+    def _own_words(self, filters: Filters) -> list[Hit]:
+        """The person's literal question, searched under the agent's filters.
+
+        Same filters, so "around 5 PM yesterday in Slack" narrows this search
+        exactly as it narrows the agent's - it must never widen what was asked.
+        """
+        text = self.utterance.strip()
+        if not text:
+            return []
+        key = repr(sorted(vars(filters).items()))
+        if key not in self._own_words_cache:
+            self._own_words_cache[key] = search(
+                self.conn, self.client, text, limit=8, filters=filters,
+                use_bm25=True,
+            ).hits
+        return self._own_words_cache[key]
 
     def _why_empty(self, args: dict[str, Any], filters: Filters) -> dict[str, Any]:
         """Relax one filter at a time and report what each would have matched."""
@@ -460,17 +508,28 @@ class Toolbox:
             limit=6, types=args.get("types") or None,
         )
         memories = []
+        from kivi.memory.search import provenance_times
+
         for hit in result.hits:
+            text = f"{hit.subject}{': ' + hit.body if hit.body else ''}"
+            # A fact the person stated to Kivi carries the date they said it.
+            # Synthesis needs that to let a correction outrank the older
+            # dictations it corrects - "Rahul leads DSPM" and "Priya is running
+            # point on DSPM" are otherwise two claims with no way to rank them.
+            told = provenance_times(self.conn, hit.memory_id)[1]
+            if told:
+                text += f" (you told Kivi on {told[:10]})"
             self.evidence[hit.memory_id] = Evidence(
-                ref=hit.memory_id, kind="fact",
-                text=f"{hit.subject}{': ' + hit.body if hit.body else ''}",
-                detail={"type": hit.type, "confidence": hit.confidence, "via": hit.via},
+                ref=hit.memory_id, kind="fact", text=text,
+                detail={"type": hit.type, "confidence": hit.confidence,
+                        "via": hit.via, "told": told},
             )
             self.used_memory_ids.append(hit.memory_id)
             memories.append({
                 "id": hit.memory_id, "type": hit.type, "subject": hit.subject,
                 "detail": hit.body or "", "confidence": round(hit.confidence, 2),
                 "found_via": hit.via, "due": hit.due_at,
+                **({"you_told_kivi_on": told[:10]} if told else {}),
             })
 
         # Attach the dictations behind those memories. A memory is an index into
@@ -513,10 +572,13 @@ class Toolbox:
         if not rows:
             return {"error": "none of those ids exist"}
 
+        # Only preferences the person stated, or switched on - see
+        # policy.APPLY_PREFERENCE_AT for why this line is shared with the UI.
         prefs = self.conn.execute(
             "SELECT subject, body FROM memories"
-            " WHERE type = 'preference' AND status = 'active'"
-            " ORDER BY confidence DESC LIMIT 6"
+            " WHERE type = 'preference' AND status = 'active' AND confidence >= ?"
+            " ORDER BY confidence DESC LIMIT 6",
+            (policy.APPLY_PREFERENCE_AT,),
         ).fetchall()
         preference_lines = [
             f"- {row['body'] or row['subject']}" for row in prefs
@@ -633,8 +695,9 @@ class Toolbox:
 
         prefs = self.conn.execute(
             "SELECT subject, body FROM memories"
-            " WHERE type = 'preference' AND status = 'active'"
-            " ORDER BY confidence DESC LIMIT 5"
+            " WHERE type = 'preference' AND status = 'active' AND confidence >= ?"
+            " ORDER BY confidence DESC LIMIT 5",
+            (policy.APPLY_PREFERENCE_AT,),
         ).fetchall()
 
         prompt = [f"Write a message to {to}.", "", f"It needs to say: {message}", ""]
@@ -780,10 +843,32 @@ class Toolbox:
     def _remember(self, args: dict[str, Any]) -> dict[str, Any]:
         action = str(args.get("action") or "")
         if action == "add":
-            return self._add(args)
-        if action in {"forget", "confirm", "revise"}:
-            return self._change(action, args)
-        return {"error": f"unknown action {action!r}"}
+            out = self._add(args)
+        elif action in {"forget", "confirm", "revise"}:
+            out = self._change(action, args)
+        else:
+            out = {"error": f"unknown action {action!r}"}
+
+        # Every outcome of an instruction has to reach the reply, including the
+        # ones where nothing was written. A turn that ends with no artifact is
+        # answered as if a search had failed - "you haven't mentioned that" -
+        # which is wrong for a request that was never a search.
+        if out.get("needs_confirmation"):
+            self.artifacts.append({
+                "kind": "remember", "written": False, "statement_id": "",
+                "ask": out["ask"],
+                "outcome": f"Nothing written yet - waiting for their answer. {out['ask']}",
+            })
+        elif "error" in out:
+            # Marked failed so the loop still owes a real attempt: a bad mem_ id
+            # on the first round should not count as having carried it out.
+            self.artifacts.append({
+                "kind": "remember", "written": False, "statement_id": "",
+                "failed": True,
+                "outcome": "Nothing was changed - Kivi could not tell which "
+                           f"memory that refers to ({out['error']}).",
+            })
+        return out
 
     def _add(self, args: dict[str, Any], supersedes: str | None = None) -> dict[str, Any]:
         """Write something the person told Kivi directly.
@@ -813,13 +898,32 @@ class Toolbox:
             and (existing["body"] or "").strip().lower() != body.lower()
             and float(existing["confidence"]) >= 0.75
         ):
+            # The exact write that carries out the change if they agree. A
+            # revise retires the old value first, so it does not collide with it
+            # again - calling `add` a second time can never get past this check.
+            proposal: dict[str, Any] = {
+                "action": "revise", "memory_id": existing["id"],
+                "type": mtype, "subject": subject, "body": body,
+            }
+            for key in ("entity_type", "relations", "due_date"):
+                if args.get(key):
+                    proposal[key] = args[key]
+            # A yes/no question, because "which is correct?" cannot be answered
+            # "yes" - and "yes" is what people say.
+            question = (
+                f"{existing['subject']} is recorded as \"{existing['body']}\". "
+                f"Replace that with \"{body}\"?"
+            )
+            self._hold_for_confirmation(existing["id"], question, proposal)
             return {
                 "needs_confirmation": True,
                 "memory_id": existing["id"],
                 "currently": f"{existing['subject']}: {existing['body']}",
                 "proposed": f"{subject}: {body}",
-                "ask": "This contradicts something already recorded. Ask the person "
-                       "which is right before writing; do not decide for them.",
+                "ask": question,
+                "if_they_agree": proposal,
+                "note": "Write nothing yet. Ask exactly this yes/no question. If "
+                        "they agree next turn, call remember with if_they_agree.",
             }
 
         statement_id = self._write_statement(
@@ -865,11 +969,18 @@ class Toolbox:
                         (policy.normalise_entity(relation.src), relation.relation),
                     )
             stage_relations(self.conn, relations)
-            build_edges(self.conn)
-        self.conn.commit()
 
         promoted = [d for d in decisions if d.status == "promoted"]
         refused = [d for d in decisions if d.status == "rejected"]
+
+        # Rebuild whenever an entity row changed, not only when relations were
+        # given. Edges bind to row ids, and promoting "DSPM: run by Rahul"
+        # supersedes the old DSPM row - so without a rebuild every works_on edge
+        # still pointed at the retired row, and "who is working on DSPM" lost
+        # the whole team it used to reach through the graph.
+        if relations or (mtype == "entity" and promoted):
+            build_edges(self.conn)
+        self.conn.commit()
 
         # Answering settles the question. Resolved here rather than by a separate
         # step, because a clarification that stays open after the person has
@@ -921,6 +1032,38 @@ class Toolbox:
             "statement_id": statement_id, "written": bool(promoted),
         })
         return out
+
+    def _hold_for_confirmation(
+        self, memory_id: str, question: str, proposal: dict[str, Any]
+    ) -> None:
+        """Keep a proposed change until the person answers, in this conversation.
+
+        Without this the question existed only inside the turn that asked it, and
+        a "yes" on the next turn had nothing to agree to. One open question per
+        memory per conversation: asking again replaces the proposal rather than
+        stacking a second one.
+        """
+        if not self.session_id:
+            return
+        now = dt.datetime.now(dt.timezone.utc).isoformat()
+        payload = json.dumps(proposal, ensure_ascii=False)
+        updated = self.conn.execute(
+            "UPDATE clarifications SET question = ?, proposed_json = ?, created_at = ?"
+            " WHERE session_id = ? AND memory_id = ? AND kind = 'confirm'"
+            " AND status = 'open'",
+            (question, payload, now, self.session_id, memory_id),
+        ).rowcount
+        if not updated:
+            cid = "clr_" + hashlib.sha256(
+                f"{self.session_id}|{memory_id}|{now}".encode("utf-8")
+            ).hexdigest()[:16]
+            self.conn.execute(
+                "INSERT INTO clarifications (id, session_id, memory_id, question,"
+                " status, created_at, kind, proposed_json)"
+                " VALUES (?, ?, ?, ?, 'open', ?, 'confirm', ?)",
+                (cid, self.session_id, memory_id, question, now, payload),
+            )
+        self.conn.commit()
 
     def _resolve_clarifications(
         self, subject: str, memory_ids: list[str | None]
@@ -990,11 +1133,29 @@ class Toolbox:
                 supersedes=memory_id,
             )
 
-        self._write_statement(
-            args.get("_utterance") or f"{action} {row['subject']}", action
-        )
+        utterance = args.get("_utterance") or f"{action} {row['subject']}"
+        statement_id = self._write_statement(utterance, action)
+        # An answer settles any open question about this memory, whichever way
+        # it went - "no, keep it" closes a confirmation as surely as "yes".
+        self._resolve_clarifications(row["subject"], [memory_id])
         self.conn.commit()
-        return {"ok": True, "memory": row["subject"], "message": message}
+
+        # Forget and confirm used to return with no artifact and no evidence, so
+        # a successful "forget that" reached the closing step with nothing to
+        # report and was answered "I don't have that" - the same wrong reply as
+        # an unrecorded instruction, for the opposite reason.
+        self.evidence[statement_id] = Evidence(
+            ref=statement_id, kind="record", text=f"You told Kivi: {utterance}",
+        )
+        self.artifacts.append({
+            "kind": "remember", "outcome": f"{message} ({row['subject']})",
+            "statement_id": statement_id, "written": True,
+        })
+        return {
+            "ok": True, "memory": row["subject"], "message": message,
+            "statement_id": statement_id,
+            "note": f"cite this as [{statement_id}] - it renders as 'you told Kivi'",
+        }
 
     def _write_statement(self, text: str, intent: str) -> str:
         """Record what the person said, so the memory it wrote can be cited.

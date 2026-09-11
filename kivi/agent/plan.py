@@ -59,7 +59,15 @@ question     They want to know something from their own dictations or from what
 
 instruction  They are telling Kivi something to remember, or to change what it
              believes. "Add Ashwin to DSPM as a frontend developer." "Priya is
-             on Atlas now." "Always keep my Slack messages short." "Forget that."
+             on Atlas now." "Change the DSPM owner from Priya to Rahul."
+             "Always keep my Slack messages short." "Forget that."
+
+             It is `instruction` whether or not Kivi already knows the old
+             value. "Change X from A to B" is telling, not asking.
+
+             A reply to a question Kivi just asked is also an `instruction`
+             when it answers that question - "yes", "correct", "no, keep it".
+             It is not vague: what it agrees to is shown above the request.
 
              A fact mentioned in passing inside a question is NOT an
              instruction. "What did I tell Bushan about the review he was
@@ -141,7 +149,15 @@ class Plan:
                 "there. Do not write a message to anybody."
             )
         elif self.kind == "instruction":
-            lines.append("Record it with `remember`, then confirm in one line.")
+            lines += [
+                "Record it with `remember`, then confirm in one line.",
+                "They are telling you, not asking - whether their dictations "
+                "already say it does not matter, and 'you haven't mentioned "
+                "that' is never the reply. If the old value exists only in "
+                "their dictations, add the NEW value with action='add'. Look "
+                "something up first only if you need a mem_ id to forget or "
+                "revise.",
+            ]
         return "\n".join(lines)
 
 
